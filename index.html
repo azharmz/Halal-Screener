@@ -735,29 +735,43 @@ async function saveData() {
     let statTV = dbJson.statTV || 0, _stHalal = dbJson.statHalal || 0, _stXTB = dbJson.statXTB || 0;
     if (uploadDone.tv) statTV = Object.keys(tvMap).length;
 
+    // Build muMap dari existing kalau Musaffa tidak diupload
+    const existingMuMap = {};
+    if (!uploadDone.mu) {
+      (dbJson.stocks || []).forEach(s => {
+        if (s.ticker && s.rating) {
+          existingMuMap[s.ticker] = { rating:s.rating, score:s.score, sector:s.sector||'', name:s.name||'', muUrl:s.muUrl||'' };
+        }
+      });
+    }
+
+    // Build xtSet dari existing kalau XTB tidak diupload
+    const existingXtSet = new Set();
+    if (!uploadDone.xt) {
+      (dbJson.stocks || []).forEach(s => { if (s.ticker) existingXtSet.add(s.ticker); });
+    }
+
     const stocks = [];
     tickers.forEach(ticker => {
       const existing = existingMap[ticker] || {};
       const tv  = tvMap[ticker] || {};
-      const mu  = uploadDone.mu ? muMap[ticker] : (existing.rating ? {
-        rating: existing.rating,
-        score:  existing.score,
-        sector: existing.sector,
-        muUrl:  existing.muUrl  || '',
-        name:   existing.name   || '',
-      } : null);
-      const inXTB = uploadDone.xt ? xtSet.has(ticker) : true;
 
-      // Kalau upload partial, ambil dari existing kalau tidak ada di file baru
-      const rating  = mu ? mu.rating  : existing.rating;
-      const score   = mu ? mu.score   : existing.score;
-      const sector  = mu ? mu.sector  : existing.sector;
-      const muUrl   = mu ? mu.muUrl   : existing.muUrl;
-      const muName  = mu ? mu.name    : '';
+      // Ambil data Musaffa: dari upload baru atau dari existing
+      const mu = uploadDone.mu ? muMap[ticker] : existingMuMap[ticker];
 
-      // Kalau tidak ada rating sama sekali, skip
+      // Cek XTB: dari upload baru atau dari existing set
+      // Kalau upload TV dengan ticker baru yang belum di existing, tetap lolos kalau ada di existingXtSet
+      const inXTB = uploadDone.xt ? xtSet.has(ticker) : existingXtSet.has(ticker);
+
+      const rating = mu ? mu.rating : existing.rating;
+      const score  = mu ? mu.score  : existing.score;
+      const sector = mu ? mu.sector : existing.sector;
+      const muUrl  = mu ? mu.muUrl  : existing.muUrl;
+      const muName = mu ? mu.name   : '';
+
+      // Skip kalau tidak ada rating Musaffa
       if (!rating || !RSCORE[rating]) return;
-      // Kalau XTB tidak diupload, asumsikan lolos (XTB jarang berubah)
+      // Skip kalau tidak tersedia di XTB
       if (!inXTB) return;
 
       const price  = uploadDone.tv ? (isNaN(tv.price) ? 0 : tv.price) : existing.price;
