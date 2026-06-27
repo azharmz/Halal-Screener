@@ -739,8 +739,14 @@ async function saveData() {
     tickers.forEach(ticker => {
       const existing = existingMap[ticker] || {};
       const tv  = tvMap[ticker] || {};
-      const mu  = uploadDone.mu ? muMap[ticker] : null;
-      const inXTB = uploadDone.xt ? xtSet.has(ticker) : (existing.inXTB !== false);
+      const mu  = uploadDone.mu ? muMap[ticker] : (existing.rating ? {
+        rating: existing.rating,
+        score:  existing.score,
+        sector: existing.sector,
+        muUrl:  existing.muUrl  || '',
+        name:   existing.name   || '',
+      } : null);
+      const inXTB = uploadDone.xt ? xtSet.has(ticker) : true;
 
       // Kalau upload partial, ambil dari existing kalau tidak ada di file baru
       const rating  = mu ? mu.rating  : existing.rating;
@@ -751,7 +757,7 @@ async function saveData() {
 
       // Kalau tidak ada rating sama sekali, skip
       if (!rating || !RSCORE[rating]) return;
-      // Kalau tidak tersedia di XTB, skip
+      // Kalau XTB tidak diupload, asumsikan lolos (XTB jarang berubah)
       if (!inXTB) return;
 
       const price  = uploadDone.tv ? (isNaN(tv.price) ? 0 : tv.price) : existing.price;
