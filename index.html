@@ -8,205 +8,198 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #f8f8f6; --surf: #ffffff; --surf2: #f3f3f0; --surf3: #eaeae6;
-    --ink: #1a1a18; --ink2: #6b6b65; --ink3: #a8a8a0;
-    --bdr: rgba(0,0,0,0.08); --bdr2: rgba(0,0,0,0.14);
-    --green: #1a9e6e; --green-bg: #e8f7f1; --green-dark: #0d6648;
-    --red: #c0392b; --red-bg: #fdecea;
-    --r-sm: 6px; --r-md: 9px; --r-lg: 13px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    font-size: 15px; color: var(--ink); background: var(--bg);
+    --bg:#f8f8f6; --surf:#fff; --surf2:#f3f3f0;
+    --ink:#1a1a18; --ink2:#6b6b65; --ink3:#a8a8a0;
+    --bdr:rgba(0,0,0,0.08); --bdr2:rgba(0,0,0,0.14);
+    --green:#1a9e6e; --green-bg:#e8f7f1; --green-dark:#0d6648;
+    --red:#c0392b; --red-bg:#fdecea;
+    --r-sm:6px; --r-md:9px; --r-lg:13px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    font-size:15px; color:var(--ink); background:var(--bg);
   }
-
-  body { min-height: 100vh; }
-  .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 60px; }
+  body { min-height:100vh; }
+  .page { max-width:1120px; margin:0 auto; padding:28px 20px 60px; }
 
   /* topbar */
-  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand-icon { width: 40px; height: 40px; background: var(--green); border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; }
-  .brand-icon i { font-size: 20px; color: #fff; }
-  .brand-name { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
-  .brand-sub { font-size: 12px; color: var(--ink3); margin-top: 2px; }
-  .topbar-right { display: flex; align-items: center; gap: 10px; }
-  .last-run { font-size: 11px; color: var(--ink3); }
-  .upload-toggle-btn {
-    height: 32px; padding: 0 14px; font-size: 12px; font-weight: 500;
-    border: 1px solid var(--bdr2); border-radius: var(--r-sm);
-    background: var(--surf); color: var(--ink2); cursor: pointer;
-    display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand-icon { width:40px; height:40px; background:var(--green); border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; }
+  .brand-icon i { font-size:20px; color:#fff; }
+  .brand-name { font-size:18px; font-weight:600; letter-spacing:-0.02em; }
+  .brand-sub { font-size:12px; color:var(--ink3); margin-top:2px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .last-run { font-size:11px; color:var(--ink3); }
+  .hdr-btn {
+    height:32px; padding:0 14px; font-size:12px; font-weight:500;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf); color:var(--ink2); cursor:pointer;
+    display:flex; align-items:center; gap:6px; transition:background 0.15s;
   }
-  .upload-toggle-btn:hover { background: var(--surf2); color: var(--ink); }
+  .hdr-btn:hover { background:var(--surf2); color:var(--ink); }
+  .hdr-btn.primary { background:var(--green); color:#fff; border-color:var(--green); }
+  .hdr-btn.primary:hover { background:#158a5e; }
 
-  /* status banner */
+  /* status */
   .status-banner {
-    border-radius: var(--r-md); padding: 10px 14px; font-size: 13px;
-    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    border-radius:var(--r-md); padding:10px 14px; font-size:13px;
+    display:flex; align-items:center; gap:8px; margin-bottom:16px;
   }
-  .status-banner.loading { background: var(--surf2); color: var(--ink2); }
-  .status-banner.error   { background: var(--red-bg); color: var(--red); }
-  .status-banner.ok      { background: var(--green-bg); color: var(--green-dark); }
-  .status-banner i { font-size: 16px; flex-shrink: 0; }
+  .status-banner.loading { background:var(--surf2); color:var(--ink2); }
+  .status-banner.error   { background:var(--red-bg); color:var(--red); }
+  .status-banner.ok      { background:var(--green-bg); color:var(--green-dark); }
+  .status-banner i { font-size:16px; flex-shrink:0; }
 
   /* upload panel */
   .upload-panel {
-    background: var(--surf); border: 1px solid var(--bdr);
-    border-radius: var(--r-lg); padding: 20px;
-    margin-bottom: 16px; display: none;
+    background:var(--surf); border:1px solid var(--bdr);
+    border-radius:var(--r-lg); padding:20px; margin-bottom:16px; display:none;
   }
-  .upload-panel.open { display: block; }
-  .upload-panel-title {
-    font-size: 12px; font-weight: 600; color: var(--ink2);
-    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px;
-  }
-  .upload-hint { font-size: 12px; color: var(--ink3); margin-bottom: 16px; }
-  .upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-  .ucard { border: 1px solid var(--bdr); border-radius: var(--r-lg); padding: 14px; transition: border-color 0.2s; }
-  .ucard.done { border-color: var(--green); }
-  .ucard-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .src-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .dot-tv { background: #378ADD; } .dot-mu { background: #7F77DD; } .dot-xt { background: #E8960A; }
-  .src-label { font-size: 11px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.07em; }
-  .tick { margin-left: auto; color: var(--green); font-size: 16px; display: none; }
-  .ucard.done .tick { display: block; }
+  .upload-panel.open { display:block; }
+  .panel-title { font-size:12px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:4px; }
+  .panel-hint  { font-size:12px; color:var(--ink3); margin-bottom:16px; }
+  .upload-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+  .ucard { border:1px solid var(--bdr); border-radius:var(--r-lg); padding:14px; transition:border-color 0.2s; }
+  .ucard.done { border-color:var(--green); }
+  .ucard-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .src-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dot-tv{background:#378ADD} .dot-mu{background:#7F77DD} .dot-xt{background:#E8960A}
+  .src-label { font-size:11px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.07em; }
+  .src-info { margin-left:auto; font-size:10px; color:var(--ink3); text-align:right; }
+  .tick { color:var(--green); font-size:16px; display:none; }
+  .ucard.done .tick { display:block; }
   .dz {
-    border: 1.5px dashed var(--bdr2); border-radius: var(--r-md);
-    padding: 14px 10px; text-align: center; cursor: pointer; transition: background 0.15s;
+    border:1.5px dashed var(--bdr2); border-radius:var(--r-md);
+    padding:14px 10px; text-align:center; cursor:pointer; transition:background 0.15s;
   }
-  .dz:hover { background: var(--surf2); }
-  .dz i { font-size: 20px; color: var(--ink3); display: block; margin-bottom: 5px; }
-  .dz-label { font-size: 11px; color: var(--ink3); line-height: 1.5; }
-  .dz.loaded i { color: var(--green); }
-  .dz.loaded .dz-label { color: var(--green); font-weight: 500; }
-  .dz input { display: none; }
-  .upload-bottom { display: flex; gap: 10px; align-items: flex-end; margin-top: 4px; }
-  .secret-group { flex: 1; }
-  .secret-group label { font-size: 11px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 6px; }
+  .dz:hover { background:var(--surf2); }
+  .dz i { font-size:20px; color:var(--ink3); display:block; margin-bottom:5px; }
+  .dz-label { font-size:11px; color:var(--ink3); line-height:1.5; }
+  .dz.loaded i { color:var(--green); }
+  .dz.loaded .dz-label { color:var(--green); font-weight:500; }
+  .dz input { display:none; }
+
+  .panel-bottom { display:flex; gap:10px; align-items:flex-end; }
+  .secret-group { flex:1; }
+  .secret-group label { font-size:11px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.06em; display:block; margin-bottom:6px; }
   .secret-inp {
-    width: 100%; height: 36px; font-size: 13px;
-    border: 1px solid var(--bdr2); border-radius: var(--r-sm);
-    background: var(--surf2); color: var(--ink); padding: 0 10px; outline: none;
+    width:100%; height:36px; font-size:13px;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf2); color:var(--ink); padding:0 10px; outline:none;
   }
-  .secret-inp:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,158,110,0.12); }
-  .save-btn {
-    height: 36px; padding: 0 22px; font-size: 13px; font-weight: 600;
-    background: var(--green); color: #fff; border: none;
-    border-radius: var(--r-sm); cursor: pointer; white-space: nowrap;
-    transition: background 0.15s, transform 0.1s; display: flex; align-items: center; gap: 6px;
+  .secret-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
+  .panel-actions { display:flex; gap:8px; }
+  .act-btn {
+    height:36px; padding:0 18px; font-size:13px; font-weight:600;
+    border:none; border-radius:var(--r-sm); cursor:pointer;
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+    transition:background 0.15s, transform 0.1s;
   }
-  .save-btn:hover { background: #158a5e; }
-  .save-btn:active { transform: scale(0.97); }
-  .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .act-btn:active { transform:scale(0.97); }
+  .act-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .btn-upload { background:var(--surf2); color:var(--ink); border:1px solid var(--bdr2); }
+  .btn-upload:hover:not(:disabled) { background:var(--surf3); }
+  .btn-process { background:var(--green); color:#fff; }
+  .btn-process:hover:not(:disabled) { background:#158a5e; }
 
   /* filter bar */
   .filter-bar {
-    background: var(--surf); border: 1px solid var(--bdr);
-    border-radius: var(--r-lg); padding: 16px;
-    display: grid; grid-template-columns: 1fr auto;
-    gap: 12px; align-items: end; margin-bottom: 16px;
+    background:var(--surf); border:1px solid var(--bdr);
+    border-radius:var(--r-lg); padding:16px;
+    display:grid; grid-template-columns:1fr auto;
+    gap:12px; align-items:end; margin-bottom:16px;
   }
-  .fgroup label { font-size: 11px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 6px; }
+  .fgroup label { font-size:11px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.06em; display:block; margin-bottom:6px; }
   .fgroup select {
-    width: 100%; height: 36px; font-size: 13px;
-    border: 1px solid var(--bdr2); border-radius: var(--r-sm);
-    background: var(--surf2); color: var(--ink);
-    padding: 0 10px; outline: none; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b65' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 10px center;
+    width:100%; height:36px; font-size:13px;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf2); color:var(--ink);
+    padding:0 10px; outline:none; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b65' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
   }
-  .fgroup select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,158,110,0.12); }
   .run-btn {
-    height: 36px; padding: 0 22px; font-size: 13px; font-weight: 600;
-    background: var(--green); color: #fff; border: none;
-    border-radius: var(--r-sm); cursor: pointer; white-space: nowrap;
-    transition: background 0.15s, transform 0.1s; display: flex; align-items: center; gap: 6px;
+    height:36px; padding:0 22px; font-size:13px; font-weight:600;
+    background:var(--green); color:#fff; border:none;
+    border-radius:var(--r-sm); cursor:pointer; white-space:nowrap;
+    display:flex; align-items:center; gap:6px; transition:background 0.15s;
   }
-  .run-btn:hover { background: #158a5e; }
-  .run-btn:active { transform: scale(0.97); }
+  .run-btn:hover { background:#158a5e; }
 
   /* stats */
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-  .scard { background: var(--surf); border: 1px solid var(--bdr); border-radius: var(--r-lg); padding: 14px 16px; }
-  .scard-val { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); line-height: 1; }
-  .scard-val.green { color: var(--green); }
-  .scard-label { font-size: 11px; color: var(--ink2); margin-top: 6px; display: flex; align-items: center; gap: 5px; }
-  .scard-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+  .scard { background:var(--surf); border:1px solid var(--bdr); border-radius:var(--r-lg); padding:14px 16px; }
+  .scard-val { font-size:28px; font-weight:600; letter-spacing:-0.03em; color:var(--ink); line-height:1; }
+  .scard-val.green { color:var(--green); }
+  .scard-label { font-size:11px; color:var(--ink2); margin-top:6px; display:flex; align-items:center; gap:5px; }
+  .scard-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 
   /* toolbar */
-  .toolbar { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+  .toolbar { display:flex; gap:8px; margin-bottom:10px; align-items:center; }
   .search-inp {
-    flex: 1; height: 36px; font-size: 13px;
-    border: 1px solid var(--bdr2); border-radius: var(--r-sm);
-    background: var(--surf); color: var(--ink); padding: 0 10px 0 34px; outline: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a8a8a0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: 10px center;
+    flex:1; height:36px; font-size:13px;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf); color:var(--ink); padding:0 10px 0 34px; outline:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a8a8a0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:10px center;
   }
-  .search-inp:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,158,110,0.12); }
+  .search-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
   .sec-sel {
-    height: 36px; font-size: 13px; min-width: 160px;
-    border: 1px solid var(--bdr2); border-radius: var(--r-sm);
-    background: var(--surf); color: var(--ink); padding: 0 28px 0 10px; outline: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b65' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 10px center;
+    height:36px; font-size:13px; min-width:160px;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf); color:var(--ink); padding:0 28px 0 10px; outline:none; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b65' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
   }
-  .sec-sel:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,158,110,0.12); }
   .export-btn {
-    height: 36px; padding: 0 16px; font-size: 13px; font-weight: 500;
-    border: 1px solid var(--bdr2); border-radius: var(--r-sm);
-    background: var(--surf); color: var(--ink2); cursor: pointer;
-    display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+    height:36px; padding:0 16px; font-size:13px; font-weight:500;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf); color:var(--ink2); cursor:pointer;
+    display:flex; align-items:center; gap:6px; transition:background 0.15s;
   }
-  .export-btn:hover { background: var(--surf2); color: var(--ink); }
+  .export-btn:hover { background:var(--surf2); color:var(--ink); }
 
   /* table */
-  .tbl-outer { background: var(--surf); border: 1px solid var(--bdr); border-radius: var(--r-lg); overflow: hidden; }
-  .tbl-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  thead { background: var(--surf2); }
+  .tbl-outer { background:var(--surf); border:1px solid var(--bdr); border-radius:var(--r-lg); overflow:hidden; }
+  .tbl-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  thead { background:var(--surf2); }
   th {
-    font-size: 10px; font-weight: 600; color: var(--ink2);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    padding: 10px 14px; text-align: left; white-space: nowrap;
-    cursor: pointer; user-select: none; border-bottom: 1px solid var(--bdr);
-    transition: color 0.15s;
+    font-size:10px; font-weight:600; color:var(--ink2);
+    text-transform:uppercase; letter-spacing:0.08em;
+    padding:10px 14px; text-align:left; white-space:nowrap;
+    cursor:pointer; user-select:none; border-bottom:1px solid var(--bdr); transition:color 0.15s;
   }
-  th:hover { color: var(--ink); }
-  td { font-size: 13px; padding: 10px 14px; border-bottom: 1px solid var(--bdr); color: var(--ink); white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafafa; }
-  .tkr { font-weight: 600; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
-  .co-name { font-size: 12px; color: var(--ink2); max-width: 170px; overflow: hidden; text-overflow: ellipsis; display: block; }
-  .mcap-val { font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+  th:hover { color:var(--ink); }
+  td { font-size:13px; padding:10px 14px; border-bottom:1px solid var(--bdr); white-space:nowrap; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#fafafa; }
+  .tkr { font-weight:600; font-family:'SF Mono','Fira Code',monospace; font-size:13px; }
+  .co-name { font-size:12px; color:var(--ink2); max-width:170px; overflow:hidden; text-overflow:ellipsis; display:block; }
+  .mcap-val { font-size:12px; color:var(--ink2); font-variant-numeric:tabular-nums; }
+  .rbadge { display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; min-width:36px; }
+  .r9{background:#d4edda;color:#155724} .r8{background:#c3e6cb;color:#0d4a1c}
+  .r7{background:#d1ecf1;color:#0c5460} .r6{background:#cce5ff;color:#004085}
+  .r5{background:#b8daff;color:#002752} .r4{background:#e2d9f3;color:#3d1a7a}
+  .r3{background:#ffeeba;color:#856404} .r2{background:#ffd98a;color:#6d4c00}
+  .r1{background:#f5c6cb;color:#721c24}
+  .sig { font-size:11px; font-weight:500; padding:2px 9px; border-radius:999px; white-space:nowrap; }
+  .sig-sbuy{background:#cce5ff;color:#004085}
+  .sig-buy{background:#d4edda;color:#155724}
+  .sig-other{background:var(--surf2);color:var(--ink2)}
+  .sect-pill { font-size:11px; color:var(--ink2); }
+  .empty { padding:48px; text-align:center; color:var(--ink3); }
+  .empty i { font-size:36px; display:block; margin-bottom:10px; opacity:0.35; }
+  .empty p { font-size:13px; }
+  .foot { font-size:11px; color:var(--ink3); text-align:right; padding:8px 14px; border-top:1px solid var(--bdr); }
 
-  /* rating badges */
-  .rbadge { display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; min-width: 36px; letter-spacing: 0.02em; }
-  .r9 { background: #d4edda; color: #155724; } .r8 { background: #c3e6cb; color: #0d4a1c; }
-  .r7 { background: #d1ecf1; color: #0c5460; } .r6 { background: #cce5ff; color: #004085; }
-  .r5 { background: #b8daff; color: #002752; } .r4 { background: #e2d9f3; color: #3d1a7a; }
-  .r3 { background: #ffeeba; color: #856404; } .r2 { background: #ffd98a; color: #6d4c00; }
-  .r1 { background: #f5c6cb; color: #721c24; }
-
-  /* signal badges */
-  .sig { font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
-  .sig-sbuy  { background: #cce5ff; color: #004085; }
-  .sig-buy   { background: #d4edda; color: #155724; }
-  .sig-other { background: var(--surf2); color: var(--ink2); }
-
-  .sect-pill { font-size: 11px; color: var(--ink2); }
-  .empty { padding: 48px; text-align: center; color: var(--ink3); }
-  .empty i { font-size: 36px; display: block; margin-bottom: 10px; opacity: 0.35; }
-  .empty p { font-size: 13px; }
-  .foot { font-size: 11px; color: var(--ink3); text-align: right; padding: 8px 14px; border-top: 1px solid var(--bdr); }
-
-  @media (max-width: 640px) {
-    .upload-grid { grid-template-columns: 1fr; }
-    .filter-bar { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .toolbar { flex-wrap: wrap; }
-    .upload-bottom { flex-direction: column; }
+  @media(max-width:640px){
+    .upload-grid{grid-template-columns:1fr}
+    .filter-bar{grid-template-columns:1fr}
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+    .toolbar{flex-wrap:wrap}
+    .panel-bottom{flex-direction:column}
+    .panel-actions{width:100%}
   }
 </style>
 </head>
@@ -223,26 +216,26 @@
     </div>
     <div class="topbar-right">
       <div class="last-run" id="last-run"></div>
-      <button class="upload-toggle-btn" onclick="toggleUpload()">
+      <button class="hdr-btn" onclick="toggleUpload()">
         <i class="ti ti-upload" style="font-size:13px"></i> Update Data
       </button>
     </div>
   </div>
 
   <div class="status-banner loading" id="status-banner">
-    <i class="ti ti-loader-2"></i>
-    <span id="status-text">Memuat data saham...</span>
+    <i class="ti ti-loader-2"></i><span id="status-text">Memuat data saham...</span>
   </div>
 
   <!-- upload panel -->
   <div class="upload-panel" id="upload-panel">
-    <div class="upload-panel-title">Update Data</div>
-    <div class="upload-hint">Upload minimal 1 file. Data yang tidak diupload akan dipertahankan dari database.</div>
+    <div class="panel-title">Update Data</div>
+    <div class="panel-hint">Upload file yang berubah saja. Klik <b>Simpan Raw</b> per sumber, lalu <b>Proses</b> untuk merge dan tampilkan hasilnya.</div>
     <div class="upload-grid">
       <div class="ucard" id="uc-tv">
         <div class="ucard-head">
           <div class="src-dot dot-tv"></div>
           <span class="src-label">TradingView</span>
+          <span class="src-info" id="info-tv">—</span>
           <i class="ti ti-circle-check tick"></i>
         </div>
         <div class="dz" id="dz-tv" onclick="document.getElementById('f-tv').click()">
@@ -255,6 +248,7 @@
         <div class="ucard-head">
           <div class="src-dot dot-mu"></div>
           <span class="src-label">Musaffa</span>
+          <span class="src-info" id="info-mu">—</span>
           <i class="ti ti-circle-check tick"></i>
         </div>
         <div class="dz" id="dz-mu" onclick="document.getElementById('f-mu').click()">
@@ -267,6 +261,7 @@
         <div class="ucard-head">
           <div class="src-dot dot-xt"></div>
           <span class="src-label">XTB</span>
+          <span class="src-info" id="info-xt">—</span>
           <i class="ti ti-circle-check tick"></i>
         </div>
         <div class="dz" id="dz-xt" onclick="document.getElementById('f-xt').click()">
@@ -276,15 +271,21 @@
         </div>
       </div>
     </div>
-    <div class="upload-bottom">
+    <div class="panel-bottom">
       <div class="secret-group">
         <label>Secret Key</label>
         <input class="secret-inp" type="password" id="secret-inp" placeholder="Masukkan secret key...">
       </div>
-      <button class="save-btn" id="save-btn" onclick="saveData()" disabled>
-        <i class="ti ti-cloud-upload" style="font-size:14px"></i>
-        <span id="save-label">Simpan ke Database</span>
-      </button>
+      <div class="panel-actions">
+        <button class="act-btn btn-upload" id="upload-btn" onclick="uploadRaw()" disabled>
+          <i class="ti ti-cloud-upload" style="font-size:14px"></i>
+          <span id="upload-label">Simpan Raw</span>
+        </button>
+        <button class="act-btn btn-process" id="process-btn" onclick="processData()">
+          <i class="ti ti-cpu" style="font-size:14px"></i>
+          <span id="process-label">Proses</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -308,25 +309,16 @@
 
   <!-- stats -->
   <div class="stats-grid" id="stats-grid" style="display:none">
-    <div class="scard">
-      <div class="scard-val" id="st-tv">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#378ADD"></span>Dari TradingView</div>
-    </div>
-    <div class="scard">
-      <div class="scard-val" id="st-halal">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#7F77DD"></span>Halal di Musaffa</div>
-    </div>
-    <div class="scard">
-      <div class="scard-val" id="st-xtb">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#E8960A"></span>Tersedia di XTB</div>
-    </div>
-    <div class="scard">
-      <div class="scard-val green" id="st-final">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#1a9e6e"></span>Lolos semua filter</div>
-    </div>
+    <div class="scard"><div class="scard-val" id="st-tv">0</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#378ADD"></span>Dari TradingView</div></div>
+    <div class="scard"><div class="scard-val" id="st-halal">0</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#7F77DD"></span>Halal di Musaffa</div></div>
+    <div class="scard"><div class="scard-val" id="st-xtb">0</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#E8960A"></span>Tersedia di XTB</div></div>
+    <div class="scard"><div class="scard-val green" id="st-final">0</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#1a9e6e"></span>Lolos semua filter</div></div>
   </div>
 
-  <!-- toolbar selalu tampil setelah data ada -->
   <div id="toolbar-wrap" style="display:none">
     <div class="toolbar">
       <input class="search-inp" id="srch" placeholder="Cari ticker / nama..." oninput="debounceSearch()">
@@ -340,32 +332,22 @@
   </div>
 
   <div id="result-wrap">
-    <div class="empty">
-      <i class="ti ti-loader-2"></i>
-      <p>Memuat data...</p>
-    </div>
+    <div class="empty"><i class="ti ti-loader-2"></i><p>Memuat data...</p></div>
   </div>
 
 </div>
-
 <script>
 // ─── Konstanta ────────────────────────────────────────────────────────────────
 const RSCORE = {'A+':9,'A':8,'A-':7,'B+':6,'B':5,'B-':4,'C+':3,'C':2,'C-':1};
 const RCLS   = {9:'r9',8:'r8',7:'r7',6:'r6',5:'r5',4:'r4',3:'r3',2:'r2',1:'r1'};
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let allStocks = [];
-let results   = [];
-let sortCol   = 'score', sortDir = -1;
+let allStocks = [], results = [];
+let sortCol = 'score', sortDir = -1;
 let uploadDone = {tv:false, mu:false, xt:false};
 let UPLOAD_DATA = {tv:[], mu:[], xt:[]};
 let _searchTimer = null;
-
-// ─── Debounce search ──────────────────────────────────────────────────────────
-function debounceSearch() {
-  clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(() => renderTable(), 300);
-}
+let _dbStats = {statTV:0, statHalal:0, statXTB:0};
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
@@ -375,39 +357,37 @@ async function init() {
     if (!res.ok) throw new Error(json.error || 'Fetch gagal');
 
     allStocks = json.stocks || [];
-    // Simpan referensi Musaffa dan XTB dari DB untuk upload partial
-    window._dbMusaffa = json.musaffa || [];
-    window._dbXTB     = json.xtb     || [];
+    _dbStats  = { statTV: json.statTV||0, statHalal: json.statHalal||0, statXTB: json.statXTB||0 };
+
     const updatedAt = json.updatedAt
-      ? new Date(json.updatedAt).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
+      ? new Date(json.updatedAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
       : null;
 
     if (!allStocks.length) {
-      showStatus('ok', 'Database kosong. Silakan upload data lewat tombol Update Data.');
-      document.getElementById('result-wrap').innerHTML = '<div class="empty"><i class="ti ti-database-off"></i><p>Belum ada data. Klik Update Data untuk upload.</p></div>';
+      showStatus('ok','Database kosong. Upload data lewat tombol Update Data, lalu klik Proses.');
+      document.getElementById('result-wrap').innerHTML = '<div class="empty"><i class="ti ti-database-off"></i><p>Belum ada data.</p></div>';
     } else {
       showStatus('ok', `${allStocks.length} saham dimuat` + (updatedAt ? ` · Diperbarui ${updatedAt}` : ''));
-      document.getElementById('last-run').textContent = updatedAt ? 'Update: ' + updatedAt : '';
-      window._dbStats = { statTV: json.statTV||0, statHalal: json.statHalal||0, statXTB: json.statXTB||0 };
+      document.getElementById('last-run').textContent = updatedAt ? 'Update: '+updatedAt : '';
       buildSectorOptions();
       buildStats();
       renderTable();
       document.getElementById('toolbar-wrap').style.display = 'block';
     }
-  } catch (err) {
-    showStatus('error', 'Gagal memuat data: ' + err.message);
-    document.getElementById('result-wrap').innerHTML = '<div class="empty"><i class="ti ti-wifi-off"></i><p>Koneksi ke database gagal.<br>Pastikan Netlify Functions sudah aktif.</p></div>';
+  } catch(err) {
+    showStatus('error','Gagal memuat data: '+err.message);
+    document.getElementById('result-wrap').innerHTML = '<div class="empty"><i class="ti ti-wifi-off"></i><p>Koneksi ke database gagal.</p></div>';
   }
 }
 
 function showStatus(type, msg) {
   const el  = document.getElementById('status-banner');
   const ico = {loading:'ti-loader-2', ok:'ti-circle-check', error:'ti-alert-circle'};
-  el.className = 'status-banner ' + type;
+  el.className = 'status-banner '+type;
   el.innerHTML = `<i class="ti ${ico[type]}"></i><span>${msg}</span>`;
 }
 
-// ─── Sector dropdown (diisi sekali, tidak ikut re-render) ─────────────────────
+// ─── Sector & Stats ───────────────────────────────────────────────────────────
 function buildSectorOptions() {
   const sectors = [...new Set(allStocks.map(r=>r.sector).filter(Boolean))].sort();
   const sel = document.getElementById('sec-filter');
@@ -415,40 +395,34 @@ function buildSectorOptions() {
     + sectors.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
 
-// ─── Stats ────────────────────────────────────────────────────────────────────
 function buildStats() {
-  const minScore = parseInt(document.getElementById('f-rating').value) || 1;
-  const filtered = allStocks.filter(r => r.score >= minScore);
-  const s = window._dbStats || {};
-  document.getElementById('st-tv').textContent    = s.statTV    || allStocks.length;
-  document.getElementById('st-halal').textContent = s.statHalal || allStocks.length;
-  document.getElementById('st-xtb').textContent   = s.statXTB   || allStocks.length;
-  document.getElementById('st-final').textContent = filtered.length;
+  const minScore = parseInt(document.getElementById('f-rating').value)||1;
+  document.getElementById('st-tv').textContent    = _dbStats.statTV;
+  document.getElementById('st-halal').textContent = _dbStats.statHalal;
+  document.getElementById('st-xtb').textContent   = _dbStats.statXTB;
+  document.getElementById('st-final').textContent = allStocks.filter(r=>r.score>=minScore).length;
   document.getElementById('stats-grid').style.display = 'grid';
 }
 
 // ─── Format helpers ───────────────────────────────────────────────────────────
-function fmtP(v) {
-  return (v===0||isNaN(v)) ? '—' : '$'+Number(v).toFixed(2);
-}
+function fmtP(v)    { return (!v||isNaN(v)) ? '—' : '$'+Number(v).toFixed(2); }
 function fmtMcap(v) {
-  if (!v || isNaN(v)) return '—';
-  if (v >= 1e12) return '$'+(v/1e12).toFixed(2)+'T';
-  if (v >= 1e9)  return '$'+(v/1e9).toFixed(2)+'B';
-  if (v >= 1e6)  return '$'+(v/1e6).toFixed(2)+'M';
+  if (!v||isNaN(v)) return '—';
+  if (v>=1e12) return '$'+(v/1e12).toFixed(2)+'T';
+  if (v>=1e9)  return '$'+(v/1e9).toFixed(2)+'B';
+  if (v>=1e6)  return '$'+(v/1e6).toFixed(2)+'M';
   return '$'+v.toFixed(0);
 }
-// Chg% — simpan sebagai angka murni (float), format saat render
 function fmtChg(v) {
   const n = parseFloat(v);
   if (isNaN(n)) return '<span style="color:var(--ink3)">—</span>';
-  const sign = n > 0 ? '+' : '';
-  const cls  = n > 0 ? 'color:var(--green)' : n < 0 ? 'color:var(--red)' : 'color:var(--ink2)';
+  const sign = n>0?'+':'';
+  const cls  = n>0?'color:var(--green)':n<0?'color:var(--red)':'color:var(--ink2)';
   return `<span style="${cls};font-variant-numeric:tabular-nums">${sign}${n.toFixed(2)}%</span>`;
 }
 function sigCls(s) {
   const sl = String(s||'').toLowerCase();
-  return sl.includes('strong buy') ? 'sig sig-sbuy' : sl==='buy' ? 'sig sig-buy' : 'sig sig-other';
+  return sl==='strong buy'?'sig sig-sbuy':sl==='buy'?'sig sig-buy':'sig sig-other';
 }
 function extLink(href, content) {
   return href
@@ -457,89 +431,81 @@ function extLink(href, content) {
 }
 
 // ─── Render tabel ─────────────────────────────────────────────────────────────
+function debounceSearch() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(()=>renderTable(), 300);
+}
+
 function renderTable() {
   if (!allStocks.length) return;
   buildStats();
 
-  const minScore = parseInt(document.getElementById('f-rating').value) || 1;
-  const q   = (document.getElementById('srch') || {value:''}).value.toLowerCase().trim();
-  const sec = (document.getElementById('sec-filter') || {value:'all'}).value;
+  const minScore = parseInt(document.getElementById('f-rating').value)||1;
+  const q   = (document.getElementById('srch')||{value:''}).value.toLowerCase().trim();
+  const sec = (document.getElementById('sec-filter')||{value:'all'}).value;
 
-  results = allStocks.filter(r => r.score >= minScore);
-
-  let rows = results.filter(r => {
+  results = allStocks.filter(r=>r.score>=minScore);
+  let rows = results.filter(r=>{
     if (q && !r.ticker.toLowerCase().includes(q) && !(r.name||'').toLowerCase().includes(q)) return false;
-    if (sec && sec !== 'all' && r.sector !== sec) return false;
+    if (sec && sec!=='all' && r.sector!==sec) return false;
     return true;
   });
 
-  rows.sort((a,b) => {
-    switch(sortCol) {
-      case 'score':  return (a.score - b.score) * sortDir;
-      case 'ticker': return a.ticker.localeCompare(b.ticker) * sortDir;
-      case 'name':   return (a.name||'').localeCompare(b.name||'') * sortDir;
-      case 'sector': return (a.sector||'').localeCompare(b.sector||'') * sortDir;
-      case 'mcap':   { const av=isNaN(a.mcap)?-1:a.mcap, bv=isNaN(b.mcap)?-1:b.mcap; return (av-bv)*sortDir; }
-      case 'price':  { const av=isNaN(a.price)?-1:a.price, bv=isNaN(b.price)?-1:b.price; return (av-bv)*sortDir; }
+  rows.sort((a,b)=>{
+    switch(sortCol){
+      case 'score':  return (a.score-b.score)*sortDir;
+      case 'ticker': return a.ticker.localeCompare(b.ticker)*sortDir;
+      case 'name':   return (a.name||'').localeCompare(b.name||'')*sortDir;
+      case 'sector': return (a.sector||'').localeCompare(b.sector||'')*sortDir;
+      case 'mcap':   { const av=isNaN(a.mcap)?-1:a.mcap,bv=isNaN(b.mcap)?-1:b.mcap; return (av-bv)*sortDir; }
+      case 'price':  { const av=isNaN(a.price)?-1:a.price,bv=isNaN(b.price)?-1:b.price; return (av-bv)*sortDir; }
       case 'chg':    {
-        // chg disimpan sebagai angka float murni
-        const av = isNaN(parseFloat(a.chg)) ? -9999 : parseFloat(a.chg);
-        const bv = isNaN(parseFloat(b.chg)) ? -9999 : parseFloat(b.chg);
+        const av=isNaN(parseFloat(a.chg))?-9999:parseFloat(a.chg);
+        const bv=isNaN(parseFloat(b.chg))?-9999:parseFloat(b.chg);
         return (av-bv)*sortDir;
       }
       case 'signal': {
-        const order = {'Strong buy':4,'Buy':3,'Neutral':2,'Sell':1,'Strong sell':0};
-        return ((order[a.signal]??-1)-(order[b.signal]??-1))*sortDir;
+        const o={'Strong buy':4,'Buy':3,'Neutral':2,'Sell':1,'Strong sell':0};
+        return ((o[a.signal]??-1)-(o[b.signal]??-1))*sortDir;
       }
       default: return 0;
     }
   });
 
-  const arr = col => col===sortCol ? (sortDir===1?' ↑':' ↓') : '';
+  const arr = col => col===sortCol?(sortDir===1?' ↑':' ↓'):'';
   const th  = (col,lbl) => `<th onclick="setSort('${col}')">${lbl}${arr(col)}</th>`;
 
   const wrap = document.getElementById('result-wrap');
-
   if (!rows.length) {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-mood-empty"></i><p>Tidak ada saham yang cocok.</p></div>';
     return;
   }
 
   wrap.innerHTML = `
-    <div class="tbl-outer">
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr>
-            ${th('ticker','Ticker')}
-            ${th('name','Nama')}
-            ${th('score','Rating')}
-            ${th('price','Price')}
-            ${th('chg','Chg %')}
-            ${th('mcap','Market Cap')}
-            ${th('signal','TV Signal')}
-            ${th('sector','Sektor')}
-          </tr></thead>
-          <tbody>
-            ${rows.map(r=>`<tr>
-              <td><span class="tkr">${extLink(r.tvUrl, r.ticker)}</span></td>
-              <td><span class="co-name">${extLink(r.tvUrl, r.name||'—')}</span></td>
-              <td>${extLink(r.muUrl, `<span class="rbadge ${RCLS[r.score]||''}">${r.rating}</span>`)}</td>
-              <td>${fmtP(r.price)}</td>
-              <td>${fmtChg(r.chg)}</td>
-              <td><span class="mcap-val">${fmtMcap(r.mcap)}</span></td>
-              <td><span class="${sigCls(r.signal)}">${r.signal||'—'}</span></td>
-              <td><span class="sect-pill">${r.sector||'—'}</span></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-      <div class="foot">${rows.length} dari ${results.length} saham · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
+    <div class="tbl-outer"><div class="tbl-wrap"><table>
+      <thead><tr>
+        ${th('ticker','Ticker')}${th('name','Nama')}${th('score','Rating')}
+        ${th('price','Price')}${th('chg','Chg %')}${th('mcap','Market Cap')}
+        ${th('signal','TV Signal')}${th('sector','Sektor')}
+      </tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td><span class="tkr">${extLink(r.tvUrl,r.ticker)}</span></td>
+        <td><span class="co-name">${extLink(r.tvUrl,r.name||'—')}</span></td>
+        <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[r.score]||''}">${r.rating}</span>`)}</td>
+        <td>${fmtP(r.price)}</td>
+        <td>${fmtChg(r.chg)}</td>
+        <td><span class="mcap-val">${fmtMcap(r.mcap)}</span></td>
+        <td><span class="${sigCls(r.signal)}">${r.signal||'—'}</span></td>
+        <td><span class="sect-pill">${r.sector||'—'}</span></td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <div class="foot">${rows.length} dari ${results.length} saham · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
     </div>`;
 }
 
 function setSort(col) {
   if (sortCol===col) sortDir*=-1;
-  else { sortCol=col; sortDir=(col==='score'||col==='signal'||col==='mcap'||col==='chg') ? -1 : 1; }
+  else { sortCol=col; sortDir=(col==='score'||col==='signal'||col==='mcap'||col==='chg')?-1:1; }
   renderTable();
 }
 
@@ -547,59 +513,35 @@ function setSort(col) {
 function toggleUpload() {
   document.getElementById('upload-panel').classList.toggle('open');
 }
-
-function checkSaveReady() {
-  // Aktif kalau minimal 1 file sudah diupload
-  const anyDone = uploadDone.tv || uploadDone.mu || uploadDone.xt;
-  document.getElementById('save-btn').disabled = !anyDone;
+function checkUploadReady() {
+  document.getElementById('upload-btn').disabled = !(uploadDone.tv||uploadDone.mu||uploadDone.xt);
 }
 
-// ─── Helper parse ─────────────────────────────────────────────────────────────
+// ─── Parse helpers ────────────────────────────────────────────────────────────
 function pNum(v) {
-  if (v===null||v===undefined||v==='') return NaN;
+  if (v===null||v===undefined||v==='') return 0;
   if (typeof v==='number') return v;
-  const s = String(v)
-    .replace(/[$,\s\u202f\u00a0]/g,'')  // hapus spasi termasuk narrow no-break space
-    .replace(/T$/i,'e12').replace(/B$/i,'e9')
-    .replace(/M$/i,'e6').replace(/K$/i,'e3');
-  return parseFloat(s);
+  const s = String(v).replace(/[$,\s\u202f\u00a0]/g,'')
+    .replace(/T$/i,'e12').replace(/B$/i,'e9').replace(/M$/i,'e6').replace(/K$/i,'e3');
+  return parseFloat(s)||0;
 }
-
-// Chg% — kembalikan angka float murni (bukan string dengan %)
-// XLSX kadang konversi "+1.24%" → 0.0124 (desimal), perlu dikali 100
 function extractChg(posRaw, negRaw) {
-  // Ambil nilai yang tidak kosong — cek positif dulu, lalu negatif
-  let raw = null;
-  let isNeg = false;
-  if (posRaw !== null && posRaw !== undefined && posRaw !== '' && posRaw !== 0) {
-    raw = posRaw;
-  } else if (negRaw !== null && negRaw !== undefined && negRaw !== '') {
-    raw = negRaw;
-    isNeg = true;
-  } else if (posRaw === 0) {
-    return 0;
-  }
-  if (raw === null) return null;
-
-  if (typeof raw === 'number') {
-    // XLSX konversi persen → desimal: deteksi dari range -1..1
-    const n = raw !== 0 && raw >= -1 && raw <= 1 ? parseFloat((raw * 100).toFixed(4)) : raw;
+  let raw=null, isNeg=false;
+  if (posRaw!==null&&posRaw!==undefined&&posRaw!==''&&posRaw!==0) raw=posRaw;
+  else if (negRaw!==null&&negRaw!==undefined&&negRaw!=='') { raw=negRaw; isNeg=true; }
+  else if (posRaw===0) return 0;
+  if (raw===null) return null;
+  if (typeof raw==='number') {
+    const n = raw!==0&&raw>=-1&&raw<=1 ? parseFloat((raw*100).toFixed(4)) : raw;
     return isNeg ? -Math.abs(n) : n;
   }
-
-  // String: bersihkan lalu parse — pertahankan tanda minus
-  const s = String(raw)
-    .replace(/\u202f|\u00a0/g, '')
-    .replace(/â€¯/g, '')
-    .replace(/\u2212|\u2013|\u2014/g, '-');  // unicode minus → ASCII minus
-  // Ekstrak angka dengan tanda
+  const s = String(raw).replace(/\u202f|\u00a0/g,'').replace(/â€¯/g,'').replace(/\u2212|\u2013|\u2014/g,'-');
   const m = s.match(/([+\-]?\d+\.?\d*)/);
   if (!m) return null;
   let n = parseFloat(m[1]);
   if (isNeg) n = -Math.abs(n);
-  return isNaN(n) ? null : n;
+  return isNaN(n)?null:n;
 }
-
 function normTicker(v, isXTB) {
   const s = String(v||'').trim();
   if (isXTB) {
@@ -612,12 +554,18 @@ function normTicker(v, isXTB) {
 function normRating(v) { return String(v||'').trim().toUpperCase().replace(/\s+/g,''); }
 function findCol(cols, patterns) {
   for (const p of patterns) {
-    const f = cols.find(c => c.toLowerCase()===p.toLowerCase());
+    const f = cols.find(c=>c.toLowerCase()===p.toLowerCase());
     if (f) return f;
   }
-  return cols.find(c => patterns.some(p => c.toLowerCase().includes(p.toLowerCase()))) || '';
+  return cols.find(c=>patterns.some(p=>c.toLowerCase().includes(p.toLowerCase())))||'';
+}
+function tvUrlToSuperchart(url) {
+  const m = String(url||'').match(/\/symbols\/([A-Z0-9]+)-([A-Z0-9.]+)\/?$/i);
+  if (!m) return '';
+  return `https://www.tradingview.com/chart/?symbol=${m[1]}%3A${m[2]}`;
 }
 
+// ─── Load file ────────────────────────────────────────────────────────────────
 function loadFile(src, inp) {
   const f = inp.files[0]; if (!f) return;
   const rd = new FileReader();
@@ -629,235 +577,153 @@ function loadFile(src, inp) {
       if (!json.length) { alert('File kosong.'); return; }
       UPLOAD_DATA[src] = json;
       uploadDone[src]  = true;
-      document.getElementById('lbl-'+src).innerHTML = f.name + '<br>' + json.length + ' baris';
+      document.getElementById('lbl-'+src).innerHTML  = f.name+'<br>'+json.length+' baris';
+      document.getElementById('info-'+src).textContent = json.length+' baris';
       document.getElementById('dz-'+src).classList.add('loaded');
       document.getElementById('uc-'+src).classList.add('done');
-      checkSaveReady();
-    } catch(err) { alert('Gagal baca file: ' + err.message); }
+      checkUploadReady();
+    } catch(err) { alert('Gagal baca file: '+err.message); }
   };
   rd.readAsBinaryString(f);
 }
 
-// ─── Parse TV URL → superchart ────────────────────────────────────────────────
-function tvUrlToSuperchart(url) {
-  const m = String(url||'').match(/\/symbols\/([A-Z0-9]+)-([A-Z0-9.]+)\/?$/i);
-  if (!m) return '';
-  return `https://www.tradingview.com/chart/?symbol=${m[1]}%3A${m[2]}`;
+// ─── Parse rows per source → normalized objects ───────────────────────────────
+function parseTVRows(rows) {
+  if (!rows.length) return [];
+  const cols = Object.keys(rows[0]);
+  const C = {
+    ticker: cols.find(c=>c==='apply-common-tooltip') || findCol(cols,['symbol','ticker']),
+    name:   cols.find(c=>c==='apply-common-tooltip 2') || findCol(cols,['name','company']),
+    url:    cols.find(c=>c==='apply-common-tooltip href') || findCol(cols,['href','url']),
+    price:  cols.find(c=>c==='cell-l8ssHf_S')   || findCol(cols,['price','close']),
+    mcap:   cols.find(c=>c==='cell-l8ssHf_S 4') || cols.find(c=>c==='cell-l8ssHf_S 2') || findCol(cols,['mcap','market']),
+    chgPos: cols.find(c=>c==='positive-cMYWjVQg') || findCol(cols,['positive']),
+    chgNeg: cols.find(c=>c==='negative-cMYWjVQg') || findCol(cols,['negative']),
+    signal: cols.find(c=>c==='container-H4XKO6Sa') || findCol(cols,['signal','recommend']),
+  };
+  console.log('TV cols:', C, 'sample:', rows[0]);
+  return rows.map(r=>({
+    ticker: normTicker(r[C.ticker], false),
+    name:   String(r[C.name]||''),
+    price:  pNum(r[C.price]),
+    mcap:   pNum(r[C.mcap]),
+    chg:    extractChg(r[C.chgPos], r[C.chgNeg]),
+    signal: String(r[C.signal]||''),
+    tvUrl:  tvUrlToSuperchart(r[C.url]),
+  })).filter(r=>r.ticker);
 }
 
-// ─── Save data ke backend ─────────────────────────────────────────────────────
-async function saveData() {
+function parseMURows(rows) {
+  if (!rows.length) return [];
+  const cols = Object.keys(rows[0]);
+  const C = {
+    ticker: findCol(cols,['line-clamp-1','line-clamp']),
+    rating: findCol(cols,['status_grade','grade','rating']),
+    name:   findCol(cols,['mb-0','name','company']),
+    url:    findCol(cols,['company-info href','href','url']),
+    sector: findCol(cols,['text-nowrap 2','text-nowrap']),
+  };
+  return rows.map(r=>({
+    ticker: normTicker(r[C.ticker], false),
+    rating: normRating(r[C.rating]),
+    name:   String(r[C.name]||''),
+    muUrl:  String(r[C.url]||''),
+    sector: String(r[C.sector]||''),
+  })).filter(r=>r.ticker && RSCORE[r.rating]!==undefined);
+}
+
+function parseXTRows(rows) {
+  if (!rows.length) return [];
+  const cols = Object.keys(rows[0]);
+  const C = {
+    ticker: findCol(cols,['xs-logo src','xs-logo','logo src']),
+    name:   findCol(cols,['xs-display-name','xs-display','display-name']),
+  };
+  return rows.map(r=>({
+    ticker: normTicker(r[C.ticker], true),
+    name:   String(r[C.name]||''),
+  })).filter(r=>r.ticker);
+}
+
+// ─── Upload raw per source ────────────────────────────────────────────────────
+async function uploadRaw() {
   const secret = document.getElementById('secret-inp').value.trim();
   if (!secret) { alert('Masukkan secret key dulu.'); return; }
 
-  const btn   = document.getElementById('save-btn');
-  const label = document.getElementById('save-label');
+  const btn   = document.getElementById('upload-btn');
+  const label = document.getElementById('upload-label');
+  btn.disabled = true;
+
+  const sources = ['tv','mu','xt'].filter(s=>uploadDone[s]);
+
+  for (const src of sources) {
+    label.textContent = `Menyimpan ${src.toUpperCase()}...`;
+    try {
+      let rows;
+      if (src==='tv')      rows = parseTVRows(UPLOAD_DATA.tv);
+      else if (src==='mu') rows = parseMURows(UPLOAD_DATA.mu);
+      else                 rows = parseXTRows(UPLOAD_DATA.xt);
+
+      if (!rows.length) { alert(`Tidak ada data valid di file ${src.toUpperCase()}.`); continue; }
+
+      const res  = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','x-upload-secret':secret},
+        body: JSON.stringify({source:src, rows}),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error||'Upload gagal');
+
+      document.getElementById('info-'+src).textContent = rows.length+' tersimpan ✓';
+    } catch(err) {
+      alert(`Gagal upload ${src.toUpperCase()}: ${err.message}`);
+    }
+  }
+
+  label.textContent = 'Simpan Raw';
+  btn.disabled = false;
+  showStatus('ok', 'Raw data tersimpan. Klik Proses untuk merge dan tampilkan hasil.');
+}
+
+// ─── Proses: trigger server-side merge ───────────────────────────────────────
+async function processData() {
+  const secret = document.getElementById('secret-inp').value.trim();
+  if (!secret) { alert('Masukkan secret key dulu.'); return; }
+
+  const btn   = document.getElementById('process-btn');
+  const label = document.getElementById('process-label');
   btn.disabled = true;
   label.textContent = 'Memproses...';
+  showStatus('loading','Menggabungkan data dari ketiga sumber...');
 
   try {
-    // Fetch data existing dari DB sebagai base
-    label.textContent = 'Mengambil data existing...';
-    const dbRes  = await fetch('/api/data');
-    const dbJson = await dbRes.json();
-    // Buat map dari data existing: ticker → stock object
-    const existingMap = {};
-    (dbJson.stocks || []).forEach(s => { existingMap[s.ticker] = s; });
-
-    // Tentukan kolom dari file yang diupload
-    const tvCols = uploadDone.tv ? Object.keys(UPLOAD_DATA.tv[0]) : [];
-    const muCols = uploadDone.mu ? Object.keys(UPLOAD_DATA.mu[0]) : [];
-    const xtCols = uploadDone.xt ? Object.keys(UPLOAD_DATA.xt[0]) : [];
-
-    const C = {
-      // TradingView kolom baru: price=cell-l8ssHf_S, chg=positive/negative, vol=cell-l8ssHf_S 2,
-      // relVol=cell-l8ssHf_S 3, mcap=cell-l8ssHf_S 4, sector=link-NzVCbt9o, signal=container-H4XKO6Sa
-      tvTicker: tvCols.find(c=>c==='apply-common-tooltip') || findCol(tvCols,['symbol','ticker']),
-      tvName:   tvCols.find(c=>c==='apply-common-tooltip 2') || findCol(tvCols,['name','company']),
-      tvUrl:    tvCols.find(c=>c==='apply-common-tooltip href') || findCol(tvCols,['href','url','link']),
-      tvPrice:  tvCols.find(c=>c==='cell-l8ssHf_S') || findCol(tvCols,['price','close','last']),
-      tvMcap:   tvCols.find(c=>c==='cell-l8ssHf_S 4') || tvCols.find(c=>c==='cell-l8ssHf_S 2') || findCol(tvCols,['market cap','mcap']),
-      tvChgPos: tvCols.find(c=>c==='positive-cMYWjVQg') || findCol(tvCols,['positive']),
-      tvChgNeg: tvCols.find(c=>c==='negative-cMYWjVQg') || findCol(tvCols,['negative']),
-      tvSignal: tvCols.find(c=>c==='container-H4XKO6Sa') || findCol(tvCols,['signal','recommend']),
-      muTicker: findCol(muCols,['line-clamp-1','line-clamp']),
-      muRating: findCol(muCols,['status_grade','grade','rating']),
-      muName:   findCol(muCols,['mb-0','name','company']),
-      muUrl:    findCol(muCols,['company-info href','href','url']),
-      muSector: findCol(muCols,['text-nowrap 2','text-nowrap']),
-      xtTicker: findCol(xtCols,['xs-logo src','xs-logo','logo src']),
-      xtName:   findCol(xtCols,['xs-display-name','xs-display','display-name']),
-    };
-    console.log('Kolom TV terdeteksi:', {price:C.tvPrice, mcap:C.tvMcap, chgPos:C.tvChgPos, chgNeg:C.tvChgNeg, signal:C.tvSignal});
-    console.log('Sampel baris TV[0]:', UPLOAD_DATA.tv[0]);
-
-    // Build muMap: dari upload baru ATAU dari DB existing
-    const muMap = {};
-    if (uploadDone.mu) {
-      UPLOAD_DATA.mu.forEach(r => {
-        const t  = normTicker(r[C.muTicker], false);
-        const rt = normRating(r[C.muRating]);
-        if (t && RSCORE[rt] !== undefined)
-          muMap[t] = { rating:rt, score:RSCORE[rt], sector:r[C.muSector]||'', name:r[C.muName]||'', muUrl:r[C.muUrl]||'' };
-      });
-    } else {
-      // Pakai data Musaffa dari DB
-      (window._dbMusaffa || []).forEach(s => {
-        if (s.ticker && s.rating) muMap[s.ticker] = { rating:s.rating, score:s.score, sector:s.sector||'', name:s.name||'', muUrl:s.muUrl||'' };
-      });
-    }
-
-    // Build xtSet: dari upload baru ATAU dari DB existing
-    const xtSet = new Set(), xtNameMap = {};
-    if (uploadDone.xt) {
-      UPLOAD_DATA.xt.forEach(r => {
-        const t = normTicker(r[C.xtTicker], true);
-        if (t) { xtSet.add(t); xtNameMap[t] = r[C.xtName]||''; }
-      });
-    } else {
-      // Pakai data XTB dari DB
-      (window._dbXTB || []).forEach(s => {
-        if (s.ticker) { xtSet.add(s.ticker); xtNameMap[s.ticker] = s.name||''; }
-      });
-    }
-
-    // Build TV map
-    const tvMap = {};
-    if (uploadDone.tv) {
-      UPLOAD_DATA.tv.forEach(r => {
-        const ticker = normTicker(r[C.tvTicker], false); if (!ticker) return;
-        const chg = extractChg(r[C.tvChgPos], r[C.tvChgNeg]);
-        tvMap[ticker] = {
-          price:  pNum(r[C.tvPrice]),
-          mcap:   pNum(r[C.tvMcap]),
-          signal: String(r[C.tvSignal]||''),
-          chg:    chg,
-          tvUrl:  tvUrlToSuperchart(r[C.tvUrl]),
-          name:   String(r[C.tvName]||''),
-        };
-      });
-    }
-
-    // Tentukan universe ticker: kalau TV diupload pakai TV, kalau tidak pakai existing
-    const tickers = uploadDone.tv
-      ? Object.keys(tvMap)
-      : Object.keys(existingMap);
-
-    label.textContent = 'Menggabungkan data...';
-
-    // Hitung stats
-    let statTV = dbJson.statTV || 0, _stHalal = dbJson.statHalal || 0, _stXTB = dbJson.statXTB || 0;
-    if (uploadDone.tv) statTV = Object.keys(tvMap).length;
-
-    // Build muMap dari existing kalau Musaffa tidak diupload
-    const existingMuMap = {};
-    if (!uploadDone.mu) {
-      (dbJson.stocks || []).forEach(s => {
-        if (s.ticker && s.rating) {
-          existingMuMap[s.ticker] = { rating:s.rating, score:s.score, sector:s.sector||'', name:s.name||'', muUrl:s.muUrl||'' };
-        }
-      });
-    }
-
-    // Build xtSet dari existing kalau XTB tidak diupload
-    const existingXtSet = new Set();
-    if (!uploadDone.xt) {
-      (dbJson.stocks || []).forEach(s => { if (s.ticker) existingXtSet.add(s.ticker); });
-    }
-
-    const stocks = [];
-    tickers.forEach(ticker => {
-      const existing = existingMap[ticker] || {};
-      const tv  = tvMap[ticker] || {};
-
-      // Ambil data Musaffa: dari upload baru atau dari existing
-      const mu = uploadDone.mu ? muMap[ticker] : existingMuMap[ticker];
-
-      // Cek XTB: dari upload baru atau dari existing set
-      // Kalau upload TV dengan ticker baru yang belum di existing, tetap lolos kalau ada di existingXtSet
-      const inXTB = uploadDone.xt ? xtSet.has(ticker) : existingXtSet.has(ticker);
-
-      const rating = mu ? mu.rating : existing.rating;
-      const score  = mu ? mu.score  : existing.score;
-      const sector = mu ? mu.sector : existing.sector;
-      const muUrl  = mu ? mu.muUrl  : existing.muUrl;
-      const muName = mu ? mu.name   : '';
-
-      // Skip kalau tidak ada rating Musaffa
-      if (!rating || !RSCORE[rating]) return;
-      // Skip kalau tidak tersedia di XTB
-      if (!inXTB) return;
-
-      const price  = uploadDone.tv ? (isNaN(tv.price) ? 0 : tv.price) : existing.price;
-      const mcap   = uploadDone.tv ? (isNaN(tv.mcap)  ? 0 : tv.mcap)  : existing.mcap;
-      const signal = uploadDone.tv ? tv.signal  : existing.signal;
-      const chg    = uploadDone.tv ? tv.chg     : existing.chg;
-      const tvUrl  = uploadDone.tv ? tv.tvUrl   : existing.tvUrl;
-      const name   = uploadDone.xt ? (xtNameMap[ticker]||muName||existing.name||tv.name||'')
-                   : (existing.name || muName || tv.name || '');
-
-      stocks.push({ ticker, price, mcap, signal, chg, tvUrl, rating, score, sector, muUrl, name, inXTB: true });
-    });
-
-    // Hitung ulang stats kalau ada upload baru
-    if (uploadDone.mu || uploadDone.tv) {
-      _stHalal = 0; _stXTB = 0;
-      tickers.forEach(ticker => {
-        const mu = uploadDone.mu ? muMap[ticker] : existingMap[ticker];
-        if (!mu) return;
-        _stHalal++;
-        const inX = uploadDone.xt ? xtSet.has(ticker) : (existingMap[ticker]?.inXTB !== false);
-        if (inX) _stXTB++;
-      });
-    }
-
-    if (!stocks.length) {
-      alert('Tidak ada saham yang lolos setelah merge. Cek console (F12) untuk debug.');
-      btn.disabled = false; label.textContent = 'Simpan ke Database';
-      return;
-    }
-
-    // Siapkan data Musaffa dan XTB untuk disimpan ke DB (kalau diupload)
-    const musaffaToSave = uploadDone.mu ? Object.entries(muMap).map(([ticker, m]) => ({
-      ticker, rating: m.rating, score: m.score, sector: m.sector, name: m.name, muUrl: m.muUrl,
-    })) : null;
-
-    const xtbToSave = uploadDone.xt ? [...xtSet].map(ticker => ({
-      ticker, name: xtNameMap[ticker] || '',
-    })) : null;
-
-    label.textContent = `Mengirim ${stocks.length} saham...`;
-
-    const res = await fetch('/api/upload', {
+    const res  = await fetch('/api/process', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-upload-secret': secret },
-      body: JSON.stringify({
-        stocks,
-        musaffa: musaffaToSave,
-        xtb:     xtbToSave,
-        statTV, statHalal: _stHalal, statXTB: _stXTB,
-      }),
+      headers: {'Content-Type':'application/json','x-upload-secret':secret},
+      body: JSON.stringify({}),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Upload gagal');
+    if (!res.ok) throw new Error(json.error||'Proses gagal');
 
-    allStocks = stocks;
-    window._dbStats = { statTV, statHalal: _stHalal, statXTB: _stXTB };
-    if (musaffaToSave) window._dbMusaffa = musaffaToSave;
-    if (xtbToSave)     window._dbXTB     = xtbToSave;
-    showStatus('ok', `${stocks.length} saham berhasil disimpan · ${new Date().toLocaleTimeString('id-ID')}`);
+    // Reload data hasil merge
+    const dataRes  = await fetch('/api/data');
+    const dataJson = await dataRes.json();
+    allStocks = dataJson.stocks||[];
+    _dbStats  = {statTV:dataJson.statTV||0, statHalal:dataJson.statHalal||0, statXTB:dataJson.statXTB||0};
+
+    showStatus('ok',`${json.count} saham berhasil diproses · TV:${json.statTV} · Halal:${json.statHalal} · XTB:${json.statXTB}`);
     buildSectorOptions();
     buildStats();
     renderTable();
     document.getElementById('toolbar-wrap').style.display = 'block';
     document.getElementById('upload-panel').classList.remove('open');
-    label.textContent = 'Simpan ke Database';
 
-  } catch (err) {
-    alert('Error: ' + err.message);
-    label.textContent = 'Simpan ke Database';
+  } catch(err) {
+    showStatus('error','Proses gagal: '+err.message);
+    alert('Error: '+err.message);
   } finally {
-    btn.disabled = !(uploadDone.tv || uploadDone.mu || uploadDone.xt);
+    btn.disabled = false;
+    label.textContent = 'Proses';
   }
 }
 
@@ -867,16 +733,15 @@ function exportCSV() {
   const hdr  = ['Ticker','Nama','Rating','Skor','Price','Chg %','Market Cap','TV Signal','Sektor','TradingView','Musaffa'];
   const rows = results.map(r=>[
     r.ticker, r.name, r.rating, r.score,
-    r.price ? Number(r.price).toFixed(2) : '',
-    r.chg !== null && r.chg !== undefined ? Number(r.chg).toFixed(2)+'%' : '',
-    r.mcap ? Number(r.mcap).toFixed(0) : '',
-    r.signal, r.sector,
-    r.tvUrl||'', r.muUrl||''
+    r.price?Number(r.price).toFixed(2):'',
+    r.chg!==null&&r.chg!==undefined?Number(r.chg).toFixed(2)+'%':'',
+    r.mcap?Number(r.mcap).toFixed(0):'',
+    r.signal, r.sector, r.tvUrl||'', r.muUrl||''
   ]);
   const csv = [hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a   = document.createElement('a');
-  a.href    = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
-  a.download = 'halal_screen_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.href    = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download = 'halal_screen_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
 }
 
