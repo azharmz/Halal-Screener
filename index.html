@@ -375,6 +375,9 @@ async function init() {
     if (!res.ok) throw new Error(json.error || 'Fetch gagal');
 
     allStocks = json.stocks || [];
+    // Simpan referensi Musaffa dan XTB dari DB untuk upload partial
+    window._dbMusaffa = json.musaffa || [];
+    window._dbXTB     = json.xtb     || [];
     const updatedAt = json.updatedAt
       ? new Date(json.updatedAt).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
       : null;
@@ -688,7 +691,7 @@ async function saveData() {
     console.log('Kolom TV terdeteksi:', {price:C.tvPrice, mcap:C.tvMcap, chgPos:C.tvChgPos, chgNeg:C.tvChgNeg, signal:C.tvSignal});
     console.log('Sampel baris TV[0]:', UPLOAD_DATA.tv[0]);
 
-    // Build lookup maps dari file yang diupload
+    // Build muMap: dari upload baru ATAU dari DB existing
     const muMap = {};
     if (uploadDone.mu) {
       UPLOAD_DATA.mu.forEach(r => {
@@ -697,13 +700,24 @@ async function saveData() {
         if (t && RSCORE[rt] !== undefined)
           muMap[t] = { rating:rt, score:RSCORE[rt], sector:r[C.muSector]||'', name:r[C.muName]||'', muUrl:r[C.muUrl]||'' };
       });
+    } else {
+      // Pakai data Musaffa dari DB
+      (window._dbMusaffa || []).forEach(s => {
+        if (s.ticker && s.rating) muMap[s.ticker] = { rating:s.rating, score:s.score, sector:s.sector||'', name:s.name||'', muUrl:s.muUrl||'' };
+      });
     }
 
+    // Build xtSet: dari upload baru ATAU dari DB existing
     const xtSet = new Set(), xtNameMap = {};
     if (uploadDone.xt) {
       UPLOAD_DATA.xt.forEach(r => {
         const t = normTicker(r[C.xtTicker], true);
         if (t) { xtSet.add(t); xtNameMap[t] = r[C.xtName]||''; }
+      });
+    } else {
+      // Pakai data XTB dari DB
+      (window._dbXTB || []).forEach(s => {
+        if (s.ticker) { xtSet.add(s.ticker); xtNameMap[s.ticker] = s.name||''; }
       });
     }
 
@@ -803,18 +817,34 @@ async function saveData() {
       return;
     }
 
+    // Siapkan data Musaffa dan XTB untuk disimpan ke DB (kalau diupload)
+    const musaffaToSave = uploadDone.mu ? Object.entries(muMap).map(([ticker, m]) => ({
+      ticker, rating: m.rating, score: m.score, sector: m.sector, name: m.name, muUrl: m.muUrl,
+    })) : null;
+
+    const xtbToSave = uploadDone.xt ? [...xtSet].map(ticker => ({
+      ticker, name: xtNameMap[ticker] || '',
+    })) : null;
+
     label.textContent = `Mengirim ${stocks.length} saham...`;
 
-    const res  = await fetch('/api/upload', {
+    const res = await fetch('/api/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-upload-secret': secret },
-      body: JSON.stringify({ stocks, statTV, statHalal: _stHalal, statXTB: _stXTB }),
+      body: JSON.stringify({
+        stocks,
+        musaffa: musaffaToSave,
+        xtb:     xtbToSave,
+        statTV, statHalal: _stHalal, statXTB: _stXTB,
+      }),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Upload gagal');
 
     allStocks = stocks;
     window._dbStats = { statTV, statHalal: _stHalal, statXTB: _stXTB };
+    if (musaffaToSave) window._dbMusaffa = musaffaToSave;
+    if (xtbToSave)     window._dbXTB     = xtbToSave;
     showStatus('ok', `${stocks.length} saham berhasil disimpan · ${new Date().toLocaleTimeString('id-ID')}`);
     buildSectorOptions();
     buildStats();
