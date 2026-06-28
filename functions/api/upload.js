@@ -1,7 +1,8 @@
 // functions/api/upload.js
-// POST /api/upload — simpan data saham ke Firestore (butuh x-upload-secret)
+// POST /api/upload — simpan raw data per sumber ke Firestore
+// Body: { source: 'tv'|'mu'|'xt', rows: [...], secret }
 
-const CORS_HEADERS = {
+const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, x-upload-secret',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -9,114 +10,52 @@ const CORS_HEADERS = {
 };
 
 export async function onRequestOptions() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+  return new Response(null, { status: 204, headers: CORS });
 }
 
 export async function onRequestPost(ctx) {
   const secret = ctx.request.headers.get('x-upload-secret') || '';
   if (!secret || secret !== ctx.env.UPLOAD_SECRET)
-    return Response.json({ error: 'Unauthorized: secret key salah' }, { status: 401, headers: CORS_HEADERS });
+    return Response.json({ error: 'Unauthorized: secret key salah' }, { status: 401, headers: CORS });
 
   let body;
   try { body = await ctx.request.json(); }
-  catch { return Response.json({ error: 'Body bukan JSON valid' }, { status: 400, headers: CORS_HEADERS }); }
+  catch { return Response.json({ error: 'Body bukan JSON valid' }, { status: 400, headers: CORS }); }
 
-  const { stocks, musaffa, xtb, statTV, statHalal, statXTB } = body;
-  if (!Array.isArray(stocks) || stocks.length === 0)
-    return Response.json({ error: 'Field stocks kosong' }, { status: 400, headers: CORS_HEADERS });
+  const { source, rows } = body;
+  if (!['tv','mu','xt'].includes(source))
+    return Response.json({ error: 'source harus tv, mu, atau xt' }, { status: 400, headers: CORS });
+  if (!Array.isArray(rows) || rows.length === 0)
+    return Response.json({ error: 'rows kosong' }, { status: 400, headers: CORS });
 
   try {
     const projectId = ctx.env.FIREBASE_PROJECT_ID;
     const apiKey    = ctx.env.FIREBASE_API_KEY;
-    const baseUrl   = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 
-    // Helper: konversi array stocks ke Firestore arrayValue
-    function toFirestoreStocks(arr) {
-      return {
-        arrayValue: {
-          values: arr.map(s => ({
-            mapValue: {
-              fields: {
-                ticker: { stringValue: String(s.ticker || '') },
-                name:   { stringValue: String(s.name   || '') },
-                rating: { stringValue: String(s.rating || '') },
-                score:  { integerValue: String(Number(s.score) || 0) },
-                price:  { doubleValue:  Number(s.price)  || 0 },
-                mcap:   { doubleValue:  Number(s.mcap)   || 0 },
-                signal: { stringValue: String(s.signal || '') },
-                sector: { stringValue: String(s.sector || '') },
-                chg:    s.chg !== null && s.chg !== undefined && !isNaN(s.chg)
-                          ? { doubleValue: Number(s.chg) }
-                          : { nullValue: 'NULL_VALUE' },
-                tvUrl:  { stringValue: String(s.tvUrl  || '') },
-                muUrl:  { stringValue: String(s.muUrl  || '') },
-              }
-            }
-          }))
-        }
-      };
-    }
-
-    // Helper: simpan dokumen ke Firestore
-    async function saveDoc(docId, fields) {
-      const url = `${baseUrl}/stocks/${docId}?key=${apiKey}`;
-      const res = await fetch(url, {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ fields }),
-      });
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`Firestore error ${res.status} (${docId}): ${err}`);
+    // Konversi rows ke Firestore format — simpan sebagai JSON string
+    // (lebih efisien dan tidak kena limit nested object Firestore)
+    const doc = {
+      fields: {
+        data:      { stringValue: JSON.stringify(rows) },
+        count:     { integerValue: String(rows.length) },
+        updatedAt: { stringValue: new Date().toISOString() },
       }
-    }
+    };
 
-    const now = new Date().toISOString();
-
-    // 1. Selalu simpan stocks/latest (hasil merge)
-    await saveDoc('latest', {
-      stocks:    toFirestoreStocks(stocks),
-      updatedAt: { stringValue: now },
-      count:     { integerValue: String(stocks.length) },
-      statTV:    { integerValue: String(statTV    || 0) },
-      statHalal: { integerValue: String(statHalal || 0) },
-      statXTB:   { integerValue: String(statXTB   || 0) },
+    const docId = source === 'tv' ? 'raw_tv' : source === 'mu' ? 'raw_mu' : 'raw_xt';
+    const url   = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/stocks/${docId}?key=${apiKey}`;
+    const res   = await fetch(url, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(doc),
     });
 
-    // 2. Kalau ada data Musaffa baru, simpan stocks/musaffa
-    if (Array.isArray(musaffa) && musaffa.length > 0) {
-      await saveDoc('musaffa', {
-        stocks:    toFirestoreStocks(musaffa),
-        updatedAt: { stringValue: now },
-        count:     { integerValue: String(musaffa.length) },
-      });
-    }
+    if (!res.ok) { const err = await res.text(); throw new Error(`Firestore error ${res.status}: ${err}`); }
 
-    // 3. Kalau ada data XTB baru, simpan stocks/xtb
-    if (Array.isArray(xtb) && xtb.length > 0) {
-      // XTB hanya butuh ticker dan nama
-      await saveDoc('xtb', {
-        stocks: {
-          arrayValue: {
-            values: xtb.map(s => ({
-              mapValue: {
-                fields: {
-                  ticker: { stringValue: String(s.ticker || '') },
-                  name:   { stringValue: String(s.name   || '') },
-                }
-              }
-            }))
-          }
-        },
-        updatedAt: { stringValue: now },
-        count:     { integerValue: String(xtb.length) },
-      });
-    }
-
-    return Response.json({ ok: true, count: stocks.length }, { headers: CORS_HEADERS });
+    return Response.json({ ok: true, source, count: rows.length }, { headers: CORS });
 
   } catch (err) {
     console.error('POST /api/upload error:', err);
-    return Response.json({ error: err.message }, { status: 500, headers: CORS_HEADERS });
+    return Response.json({ error: err.message }, { status: 500, headers: CORS });
   }
 }
