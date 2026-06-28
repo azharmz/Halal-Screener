@@ -193,62 +193,25 @@
   .empty p { font-size:13px; }
   .foot { font-size:11px; color:var(--ink3); text-align:right; padding:8px 14px; border-top:1px solid var(--bdr); }
 
-  /* drawer */
-  .drawer-overlay {
-    position:fixed; inset:0; background:rgba(0,0,0,0.35);
-    z-index:200; opacity:0; pointer-events:none; transition:opacity 0.2s;
+  /* tab content */
+  .tab-search {
+    display:flex; gap:8px; margin-bottom:10px; align-items:center;
   }
-  .drawer-overlay.open { opacity:1; pointer-events:all; }
-  .drawer {
-    position:fixed; top:0; right:0; bottom:0; width:480px; max-width:100vw;
-    background:var(--surf); box-shadow:-4px 0 24px rgba(0,0,0,0.12);
-    display:flex; flex-direction:column; z-index:201;
-    transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);
-  }
-  .drawer-overlay.open .drawer { transform:translateX(0); }
-  .drawer-head {
-    padding:18px 20px 14px; border-bottom:1px solid var(--bdr);
-    display:flex; align-items:center; gap:10px; flex-shrink:0;
-  }
-  .drawer-title { font-size:15px; font-weight:600; flex:1; }
-  .drawer-count { font-size:12px; color:var(--ink3); }
-  .drawer-close {
-    width:32px; height:32px; border:none; background:var(--surf2);
-    border-radius:var(--r-sm); cursor:pointer; display:flex;
-    align-items:center; justify-content:center; color:var(--ink2);
-    transition:background 0.15s;
-  }
-  .drawer-close:hover { background:var(--surf3); color:var(--ink); }
-  .drawer-search {
-    padding:12px 16px; border-bottom:1px solid var(--bdr); flex-shrink:0;
-  }
-  .drawer-search input {
-    width:100%; height:36px; font-size:13px;
+  .tab-search-inp {
+    flex:1; height:36px; font-size:13px;
     border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf2); color:var(--ink);
-    padding:0 10px 0 34px; outline:none;
+    background:var(--surf); color:var(--ink); padding:0 10px 0 34px; outline:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a8a8a0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
     background-repeat:no-repeat; background-position:10px center;
   }
-  .drawer-search input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
-  .drawer-body { flex:1; overflow-y:auto; }
-  .drawer-table { width:100%; border-collapse:collapse; }
-  .drawer-table th {
-    font-size:10px; font-weight:600; color:var(--ink2);
-    text-transform:uppercase; letter-spacing:0.08em;
-    padding:8px 16px; text-align:left; white-space:nowrap;
-    border-bottom:1px solid var(--bdr); background:var(--surf2);
-    position:sticky; top:0;
-  }
-  .drawer-table td { font-size:13px; padding:9px 16px; border-bottom:1px solid var(--bdr); }
-  .drawer-table tr:last-child td { border-bottom:none; }
-  .drawer-table tr:hover td { background:#fafafa; }
-  .drawer-empty { padding:40px; text-align:center; color:var(--ink3); font-size:13px; }
-  .drawer-foot { font-size:11px; color:var(--ink3); padding:8px 16px; border-top:1px solid var(--bdr); flex-shrink:0; }
+  .tab-search-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
 
-  /* stats card clickable */
-  .scard.clickable { cursor:pointer; transition:border-color 0.15s, box-shadow 0.15s; }
-  .scard.clickable:hover { border-color:var(--bdr2); box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+  /* stats card as tab */
+  .scard { cursor:default; }
+  .scard.tab { cursor:pointer; transition:border-color 0.15s, box-shadow 0.15s; }
+  .scard.tab:hover { border-color:var(--bdr2); box-shadow:0 2px 8px rgba(0,0,0,0.07); }
+  .scard.tab.active { border-color:var(--green); box-shadow:0 0 0 2px rgba(26,158,110,0.15); }
+  .scard.tab.active .scard-val { color:var(--green); }
 
   /* modal secret key */
   .modal-overlay {
@@ -315,28 +278,7 @@
     </div>
   </div>
 </div>
-<!-- drawer list -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer(event)">
-  <div class="drawer" id="drawer">
-    <div class="drawer-head">
-      <div>
-        <div class="drawer-title" id="drawer-title">—</div>
-        <div class="drawer-count" id="drawer-count"></div>
-      </div>
-      <button class="drawer-close" onclick="closeDrawer()"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="drawer-search">
-      <input type="text" id="drawer-srch" placeholder="Cari ticker / nama..." oninput="renderDrawer()">
-    </div>
-    <div class="drawer-body">
-      <table class="drawer-table" id="drawer-table">
-        <thead id="drawer-thead"></thead>
-        <tbody id="drawer-tbody"></tbody>
-      </table>
-    </div>
-    <div class="drawer-foot" id="drawer-foot"></div>
-  </div>
-</div>
+<!-- drawer removed, replaced by tab switcher -->
 
 <div class="page">
 
@@ -419,53 +361,61 @@
     </div>
   </div>
 
-  <!-- filter bar -->
-  <div class="filter-bar">
-    <div class="fgroup">
-      <label>Rating Musaffa minimum</label>
-      <select id="f-rating" onchange="renderTable()">
-        <option value="1">Semua halal (C− ke atas)</option>
-        <option value="4">B− ke atas</option>
-        <option value="5">B ke atas</option>
-        <option value="7">A− ke atas</option>
-        <option value="8">A ke atas</option>
-        <option value="9">A+ saja</option>
-      </select>
-    </div>
-    <button class="run-btn" onclick="renderTable()">
-      <i class="ti ti-filter" style="font-size:14px"></i> Filter
-    </button>
-  </div>
-
-  <!-- stats -->
+  <!-- stats as tab switcher -->
   <div class="stats-grid" id="stats-grid" style="display:none">
-    <div class="scard clickable" onclick="openDrawer('tv')" title="Klik untuk lihat daftar">
+    <div class="scard tab" id="tab-tv" onclick="switchTab('tv')">
       <div class="scard-val" id="st-tv">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#378ADD"></span>Dari TradingView <i class="ti ti-chevron-right" style="margin-left:auto;font-size:12px;opacity:0.5"></i></div></div>
-    <div class="scard clickable" onclick="openDrawer('mu')" title="Klik untuk lihat daftar">
+      <div class="scard-label"><span class="scard-dot" style="background:#378ADD"></span>Dari TradingView</div>
+    </div>
+    <div class="scard tab" id="tab-mu" onclick="switchTab('mu')">
       <div class="scard-val" id="st-halal">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#7F77DD"></span>Halal di Musaffa <i class="ti ti-chevron-right" style="margin-left:auto;font-size:12px;opacity:0.5"></i></div></div>
-    <div class="scard clickable" onclick="openDrawer('xt')" title="Klik untuk lihat daftar">
+      <div class="scard-label"><span class="scard-dot" style="background:#7F77DD"></span>Halal di Musaffa</div>
+    </div>
+    <div class="scard tab" id="tab-xt" onclick="switchTab('xt')">
       <div class="scard-val" id="st-xtb">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#E8960A"></span>Tersedia di XTB <i class="ti ti-chevron-right" style="margin-left:auto;font-size:12px;opacity:0.5"></i></div></div>
-    <div class="scard"><div class="scard-val green" id="st-final">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#1a9e6e"></span>Lolos semua filter</div></div>
+      <div class="scard-label"><span class="scard-dot" style="background:#E8960A"></span>Tersedia di XTB</div>
+    </div>
+    <div class="scard tab active" id="tab-result" onclick="switchTab('result')">
+      <div class="scard-val green" id="st-final">0</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#1a9e6e"></span>Lolos semua filter</div>
+    </div>
   </div>
 
-  <div id="toolbar-wrap" style="display:none">
-    <div class="toolbar">
-      <input class="search-inp" id="srch" placeholder="Cari ticker / nama..." oninput="debounceSearch()">
-      <select class="sec-sel" id="sec-filter" onchange="renderTable()">
+  <!-- tab content area -->
+  <div id="tab-content" style="display:none">
+
+    <!-- filter bar — hanya tampil di tab result -->
+    <div class="filter-bar" id="filter-bar" style="display:none">
+      <div class="fgroup">
+        <label>Rating Musaffa minimum</label>
+        <select id="f-rating" onchange="renderTable()">
+          <option value="1">Semua halal (C− ke atas)</option>
+          <option value="4">B− ke atas</option>
+          <option value="5">B ke atas</option>
+          <option value="7">A− ke atas</option>
+          <option value="8">A ke atas</option>
+          <option value="9">A+ saja</option>
+        </select>
+      </div>
+      <button class="run-btn" onclick="renderTable()">
+        <i class="ti ti-filter" style="font-size:14px"></i> Filter
+      </button>
+    </div>
+
+    <!-- toolbar search -->
+    <div class="tab-search" id="tab-search-bar">
+      <input class="tab-search-inp" id="tab-srch" placeholder="Cari ticker / nama..." oninput="debounceTabSearch()">
+      <select class="sec-sel" id="sec-filter" onchange="renderActiveTab()" style="display:none">
         <option value="all">Semua sektor</option>
       </select>
-      <button class="export-btn" onclick="exportCSV()">
+      <button class="export-btn" id="export-btn" onclick="exportCSV()" style="display:none">
         <i class="ti ti-download" style="font-size:14px"></i> Export CSV
       </button>
     </div>
-  </div>
 
-  <div id="result-wrap">
-    <div class="empty"><i class="ti ti-loader-2"></i><p>Memuat data...</p></div>
+    <!-- content -->
+    <div id="tab-result-wrap"></div>
+
   </div>
 
 </div>
@@ -482,7 +432,8 @@ let UPLOAD_DATA = {tv:[], mu:[], xt:[]};
 let _searchTimer = null;
 let _dbStats = {statTV:0, statHalal:0, statXTB:0};
 let _dbTV = [], _dbMusaffa = [], _dbXTB = [];
-let _drawerType = null, _drawerTimer = null;
+let _activeTab = 'result';
+let _tabTimer = null;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
@@ -509,8 +460,8 @@ async function init() {
       document.getElementById('last-run').textContent = updatedAt ? 'Update: '+updatedAt : '';
       buildSectorOptions();
       buildStats();
-      renderTable();
-      document.getElementById('toolbar-wrap').style.display = 'block';
+      switchTab('result');
+      document.getElementById('tab-content').style.display = 'block';
     }
   } catch(err) {
     showStatus('error','Gagal memuat data: '+err.message);
@@ -579,8 +530,8 @@ function renderTable() {
   buildStats();
 
   const minScore = parseInt(document.getElementById('f-rating').value)||1;
-  const q   = (document.getElementById('srch')||{value:''}).value.toLowerCase().trim();
-  const sec = (document.getElementById('sec-filter')||{value:'all'}).value;
+  const q   = document.getElementById('tab-srch').value.toLowerCase().trim();
+  const sec = document.getElementById('sec-filter').value;
 
   results = allStocks.filter(r=>r.score>=minScore);
   let rows = results.filter(r=>{
@@ -613,7 +564,7 @@ function renderTable() {
   const arr = col => col===sortCol?(sortDir===1?' ↑':' ↓'):'';
   const th  = (col,lbl) => `<th onclick="setSort('${col}')">${lbl}${arr(col)}</th>`;
 
-  const wrap = document.getElementById('result-wrap');
+  const wrap = document.getElementById('tab-result-wrap');
   if (!rows.length) {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-mood-empty"></i><p>Tidak ada saham yang cocok.</p></div>';
     return;
@@ -903,8 +854,8 @@ async function processData() {
     showStatus('ok',`${json.count} saham berhasil diproses · TV:${json.statTV} · Halal:${json.statHalal} · XTB:${json.statXTB}`);
     buildSectorOptions();
     buildStats();
-    renderTable();
-    document.getElementById('toolbar-wrap').style.display = 'block';
+    switchTab('result');
+    document.getElementById('tab-content').style.display = 'block';
     document.getElementById('upload-panel').classList.remove('open');
 
   } catch(err) {
@@ -916,111 +867,109 @@ async function processData() {
   }
 }
 
-// ─── Drawer ───────────────────────────────────────────────────────────────────
-function openDrawer(type) {
-  _drawerType = type;
-  document.getElementById('drawer-srch').value = '';
-  if (type === 'tv') {
-    document.getElementById('drawer-title').textContent = 'Dari TradingView';
-    document.getElementById('drawer-thead').innerHTML = `<tr>
-      <th>Ticker</th><th>Nama</th><th>Price</th><th>Chg %</th><th>Signal</th>
-    </tr>`;
-  } else if (type === 'mu') {
-    document.getElementById('drawer-title').textContent = 'Halal di Musaffa';
-    document.getElementById('drawer-thead').innerHTML = `<tr>
-      <th>Ticker</th><th>Nama</th><th>Rating</th><th>Sektor</th>
-    </tr>`;
-  } else {
-    document.getElementById('drawer-title').textContent = 'Tersedia di XTB';
-    document.getElementById('drawer-thead').innerHTML = `<tr>
-      <th>Ticker</th><th>Nama</th>
-    </tr>`;
-  }
-  renderDrawer();
-  document.getElementById('drawer-overlay').classList.add('open');
-  setTimeout(()=>document.getElementById('drawer-srch').focus(), 250);
+// ─── Tab switcher ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  _activeTab = tab;
+  document.getElementById('tab-srch').value = '';
+
+  // Update active card
+  ['tv','mu','xt','result'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+
+  // Filter bar dan export hanya di tab result
+  document.getElementById('filter-bar').style.display    = tab==='result' ? '' : 'none';
+  document.getElementById('sec-filter').style.display    = tab==='result' ? '' : 'none';
+  document.getElementById('export-btn').style.display    = tab==='result' ? '' : 'none';
+
+  // Search placeholder
+  const placeholders = {
+    tv: 'Cari ticker / nama...', mu: 'Cari ticker / nama / sektor...',
+    xt: 'Cari ticker / nama...', result: 'Cari ticker / nama...'
+  };
+  document.getElementById('tab-srch').placeholder = placeholders[tab];
+
+  renderActiveTab();
 }
 
-function closeDrawer(e) {
-  if (e && e.target !== document.getElementById('drawer-overlay')) return;
-  document.getElementById('drawer-overlay').classList.remove('open');
-  _drawerType = null;
+function debounceTabSearch() {
+  clearTimeout(_tabTimer);
+  _tabTimer = setTimeout(()=>renderActiveTab(), 250);
 }
 
-function renderDrawer() {
-  clearTimeout(_drawerTimer);
-  _drawerTimer = setTimeout(()=>_renderDrawerNow(), 200);
+function renderActiveTab() {
+  if (_activeTab === 'result') renderTable();
+  else renderTabList(_activeTab);
 }
 
-function _renderDrawerNow() {
-  if (!_drawerType) return;
-  const q    = document.getElementById('drawer-srch').value.toLowerCase().trim();
-  const RCLS = {9:'r9',8:'r8',7:'r7',6:'r6',5:'r5',4:'r4',3:'r3',2:'r2',1:'r1'};
-  const RSCORE = {'A+':9,'A':8,'A-':7,'B+':6,'B':5,'B-':4,'C+':3,'C':2,'C-':1};
+function renderTabList(type) {
+  const q   = document.getElementById('tab-srch').value.toLowerCase().trim();
+  const wrap = document.getElementById('tab-result-wrap');
   const extLink = (href, content) => href
     ? `<a href="${href}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dashed var(--bdr2)">${content}</a>`
     : content;
 
-  let rows, tbody;
+  let data, thead, tbody, foot;
 
-  if (_drawerType === 'tv') {
-    const data = _dbTV.filter(r => {
-      if (!q) return true;
-      return r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q);
-    });
-    document.getElementById('drawer-count').textContent = `${data.length} dari ${_dbTV.length} saham`;
-    document.getElementById('drawer-foot').textContent  = `${data.length} saham TradingView ditampilkan`;
-
+  if (type === 'tv') {
+    data = _dbTV.filter(r => !q ||
+      r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q));
+    thead = `<tr><th>Ticker</th><th>Nama</th><th>Price</th><th>Chg %</th><th>Market Cap</th><th>Signal</th></tr>`;
     tbody = data.map(r => {
-      const chgN = parseFloat(r.chg);
+      const chgN   = parseFloat(r.chg);
       const chgStr = isNaN(chgN) ? '—'
         : `<span style="${chgN>0?'color:var(--green)':chgN<0?'color:var(--red)':'color:var(--ink2)'}">${chgN>0?'+':''}${chgN.toFixed(2)}%</span>`;
-      const sigCls = (r.signal||'').toLowerCase()==='strong buy' ? 'sig sig-sbuy'
-        : (r.signal||'').toLowerCase()==='buy' ? 'sig sig-buy' : 'sig sig-other';
+      const sc = (r.signal||'').toLowerCase();
+      const sigCls = sc==='strong buy'?'sig sig-sbuy':sc==='buy'?'sig sig-buy':'sig sig-other';
       return `<tr>
-        <td><span style="font-weight:600;font-family:'SF Mono','Fira Code',monospace">${extLink(r.tvUrl, r.ticker)}</span></td>
-        <td style="color:var(--ink2);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis">${r.name||'—'}</td>
-        <td style="font-variant-numeric:tabular-nums">${r.price ? '$'+Number(r.price).toFixed(2) : '—'}</td>
+        <td><span class="tkr">${extLink(r.tvUrl, r.ticker)}</span></td>
+        <td><span class="co-name">${r.name||'—'}</span></td>
+        <td>${r.price?'$'+Number(r.price).toFixed(2):'—'}</td>
         <td>${chgStr}</td>
+        <td><span class="mcap-val">${fmtMcap(r.mcap)}</span></td>
         <td><span class="${sigCls}">${r.signal||'—'}</span></td>
       </tr>`;
     }).join('');
+    foot = `${data.length} dari ${_dbTV.length} saham TradingView`;
 
-  } else if (_drawerType === 'mu') {
-    const data = _dbMusaffa.filter(r => {
-      if (!q) return true;
-      return r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q) || (r.sector||'').toLowerCase().includes(q);
-    });
-    document.getElementById('drawer-count').textContent = `${data.length} dari ${_dbMusaffa.length} saham`;
-    document.getElementById('drawer-foot').textContent  = `${data.length} saham halal ditampilkan`;
-
+  } else if (type === 'mu') {
+    data = _dbMusaffa.filter(r => !q ||
+      r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q) || (r.sector||'').toLowerCase().includes(q));
+    thead = `<tr><th>Ticker</th><th>Nama</th><th>Rating</th><th>Sektor</th></tr>`;
     tbody = data.map(r => {
-      const score = RSCORE[r.rating] || 0;
-      const cls   = RCLS[score] || '';
+      const score = RSCORE[r.rating]||0;
       return `<tr>
-        <td><span style="font-weight:600;font-family:'SF Mono','Fira Code',monospace">${extLink(r.muUrl, r.ticker)}</span></td>
-        <td style="color:var(--ink2);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis">${r.name||'—'}</td>
-        <td>${extLink(r.muUrl, `<span class="rbadge ${cls}">${r.rating}</span>`)}</td>
-        <td style="font-size:11px;color:var(--ink2)">${r.sector||'—'}</td>
+        <td><span class="tkr">${extLink(r.muUrl, r.ticker)}</span></td>
+        <td><span class="co-name">${r.name||'—'}</span></td>
+        <td>${extLink(r.muUrl, `<span class="rbadge ${RCLS[score]||''}">${r.rating}</span>`)}</td>
+        <td><span class="sect-pill">${r.sector||'—'}</span></td>
       </tr>`;
     }).join('');
+    foot = `${data.length} dari ${_dbMusaffa.length} saham halal Musaffa`;
 
   } else {
-    const data = _dbXTB.filter(r => {
-      if (!q) return true;
-      return r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q);
-    });
-    document.getElementById('drawer-count').textContent = `${data.length} dari ${_dbXTB.length} saham`;
-    document.getElementById('drawer-foot').textContent  = `${data.length} saham XTB ditampilkan`;
-
+    data = _dbXTB.filter(r => !q ||
+      r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q));
+    thead = `<tr><th>Ticker</th><th>Nama</th></tr>`;
     tbody = data.map(r => `<tr>
-      <td><span style="font-weight:600;font-family:'SF Mono','Fira Code',monospace">${r.ticker}</span></td>
-      <td style="color:var(--ink2);font-size:12px">${r.name||'—'}</td>
+      <td><span class="tkr">${r.ticker}</span></td>
+      <td><span class="co-name">${r.name||'—'}</span></td>
     </tr>`).join('');
+    foot = `${data.length} dari ${_dbXTB.length} saham XTB`;
   }
 
-  document.getElementById('drawer-tbody').innerHTML = tbody ||
-    `<tr><td colspan="4" class="drawer-empty">Tidak ada hasil.</td></tr>`;
+  if (!data.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-mood-empty"></i><p>Tidak ada hasil.</p></div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="tbl-outer"><div class="tbl-wrap"><table>
+      <thead>${thead}</thead>
+      <tbody>${tbody}</tbody>
+    </table></div>
+    <div class="foot">${foot} · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
+    </div>`;
 }
 
 // ─── Export CSV ───────────────────────────────────────────────────────────────
