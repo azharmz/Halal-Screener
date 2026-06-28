@@ -193,6 +193,45 @@
   .empty p { font-size:13px; }
   .foot { font-size:11px; color:var(--ink3); text-align:right; padding:8px 14px; border-top:1px solid var(--bdr); }
 
+  /* modal secret key */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.4);
+    display:flex; align-items:center; justify-content:center;
+    z-index:100; opacity:0; pointer-events:none; transition:opacity 0.2s;
+  }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal {
+    background:var(--surf); border-radius:var(--r-lg);
+    padding:28px; width:100%; max-width:380px; margin:16px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.18);
+    transform:translateY(8px); transition:transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform:translateY(0); }
+  .modal-title { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .modal-sub { font-size:13px; color:var(--ink2); margin-bottom:20px; }
+  .modal-inp {
+    width:100%; height:40px; font-size:14px;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf2); color:var(--ink); padding:0 12px; outline:none;
+    margin-bottom:12px;
+  }
+  .modal-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
+  .modal-err { font-size:12px; color:var(--red); margin-bottom:10px; display:none; }
+  .modal-err.show { display:block; }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+  .modal-cancel {
+    height:36px; padding:0 16px; font-size:13px;
+    border:1px solid var(--bdr2); border-radius:var(--r-sm);
+    background:var(--surf); color:var(--ink2); cursor:pointer;
+  }
+  .modal-cancel:hover { background:var(--surf2); }
+  .modal-confirm {
+    height:36px; padding:0 20px; font-size:13px; font-weight:600;
+    background:var(--green); color:#fff; border:none;
+    border-radius:var(--r-sm); cursor:pointer; transition:background 0.15s;
+  }
+  .modal-confirm:hover { background:#158a5e; }
+
   @media(max-width:640px){
     .upload-grid{grid-template-columns:1fr}
     .filter-bar{grid-template-columns:1fr}
@@ -204,6 +243,21 @@
 </style>
 </head>
 <body>
+
+<!-- modal secret key -->
+<div class="modal-overlay" id="secret-modal" onclick="modalClickOutside(event)">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-lock" style="margin-right:6px"></i>Masukkan Secret Key</div>
+    <div class="modal-sub">Diperlukan untuk mengakses panel update data.</div>
+    <input class="modal-inp" type="password" id="modal-key" placeholder="Secret key..."
+      onkeydown="if(event.key==='Enter')confirmSecret()">
+    <div class="modal-err" id="modal-err">Secret key salah. Coba lagi.</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Batal</button>
+      <button class="modal-confirm" onclick="confirmSecret()">Masuk</button>
+    </div>
+  </div>
+</div>
 <div class="page">
 
   <div class="topbar">
@@ -272,10 +326,6 @@
       </div>
     </div>
     <div class="panel-bottom">
-      <div class="secret-group">
-        <label>Secret Key</label>
-        <input class="secret-inp" type="password" id="secret-inp" placeholder="Masukkan secret key...">
-      </div>
       <div class="panel-actions">
         <button class="act-btn btn-upload" id="upload-btn" onclick="uploadRaw()" disabled>
           <i class="ti ti-cloud-upload" style="font-size:14px"></i>
@@ -509,10 +559,58 @@ function setSort(col) {
   renderTable();
 }
 
-// ─── Upload panel ─────────────────────────────────────────────────────────────
+// ─── Modal secret key ─────────────────────────────────────────────────────────
+let _sessionSecret = ''; // tersimpan selama sesi, tidak perlu input ulang
+
 function toggleUpload() {
-  document.getElementById('upload-panel').classList.toggle('open');
+  if (_sessionSecret) {
+    // Sudah terautentikasi sesi ini — langsung buka/tutup panel
+    document.getElementById('upload-panel').classList.toggle('open');
+  } else {
+    // Belum auth — tampilkan modal
+    document.getElementById('modal-key').value = '';
+    document.getElementById('modal-err').classList.remove('show');
+    document.getElementById('secret-modal').classList.add('open');
+    setTimeout(()=>document.getElementById('modal-key').focus(), 100);
+  }
 }
+
+async function confirmSecret() {
+  const key = document.getElementById('modal-key').value.trim();
+  if (!key) return;
+
+  // Validasi secret key dengan coba ping /api/process tanpa action
+  // Cara paling simpel: simpan saja dan biarkan server yang validasi saat upload/proses
+  // Tapi kita bisa validasi dulu dengan request kecil ke /api/upload dengan body kosong
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-upload-secret':key},
+      body: JSON.stringify({source:'tv', rows:[]}), // rows kosong → 400, bukan 401
+    });
+    if (res.status === 401) {
+      document.getElementById('modal-err').classList.add('show');
+      document.getElementById('modal-key').focus();
+      return;
+    }
+    // 400 = rows kosong tapi key benar → OK
+    _sessionSecret = key;
+    closeModal();
+    document.getElementById('upload-panel').classList.add('open');
+  } catch {
+    document.getElementById('modal-err').textContent = 'Gagal menghubungi server.';
+    document.getElementById('modal-err').classList.add('show');
+  }
+}
+
+function closeModal() {
+  document.getElementById('secret-modal').classList.remove('open');
+}
+
+function modalClickOutside(e) {
+  if (e.target === document.getElementById('secret-modal')) closeModal();
+}
+
 function checkUploadReady() {
   document.getElementById('upload-btn').disabled = !(uploadDone.tv||uploadDone.mu||uploadDone.xt);
 }
@@ -647,8 +745,8 @@ function parseXTRows(rows) {
 
 // ─── Upload raw per source ────────────────────────────────────────────────────
 async function uploadRaw() {
-  const secret = document.getElementById('secret-inp').value.trim();
-  if (!secret) { alert('Masukkan secret key dulu.'); return; }
+  const secret = _sessionSecret;
+  if (!secret) { toggleUpload(); return; }
 
   const btn   = document.getElementById('upload-btn');
   const label = document.getElementById('upload-label');
@@ -687,8 +785,8 @@ async function uploadRaw() {
 
 // ─── Proses: trigger server-side merge ───────────────────────────────────────
 async function processData() {
-  const secret = document.getElementById('secret-inp').value.trim();
-  if (!secret) { alert('Masukkan secret key dulu.'); return; }
+  const secret = _sessionSecret;
+  if (!secret) { toggleUpload(); return; }
 
   const btn   = document.getElementById('process-btn');
   const label = document.getElementById('process-label');
