@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,267 +7,331 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:#f8f8f6; --surf:#fff; --surf2:#f3f3f0;
-    --ink:#1a1a18; --ink2:#6b6b65; --ink3:#a8a8a0;
-    --bdr:rgba(0,0,0,0.08); --bdr2:rgba(0,0,0,0.14);
-    --green:#1a9e6e; --green-bg:#e8f7f1; --green-dark:#0d6648;
-    --red:#c0392b; --red-bg:#fdecea;
-    --r-sm:6px; --r-md:9px; --r-lg:13px;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
-    font-size:15px; color:var(--ink); background:var(--bg);
-  }
-  body { min-height:100vh; }
-  .page { max-width:1120px; margin:0 auto; padding:28px 20px 60px; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 
-  /* topbar */
-  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
-  .brand { display:flex; align-items:center; gap:12px; }
-  .brand-icon { width:40px; height:40px; background:var(--green); border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; }
-  .brand-icon i { font-size:20px; color:#fff; }
-  .brand-name { font-size:18px; font-weight:600; letter-spacing:-0.02em; }
-  .brand-sub { font-size:12px; color:var(--ink3); margin-top:2px; }
-  .topbar-right { display:flex; align-items:center; gap:10px; }
-  .last-run { font-size:11px; color:var(--ink3); }
-  .hdr-btn {
-    height:32px; padding:0 14px; font-size:12px; font-weight:500;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf); color:var(--ink2); cursor:pointer;
-    display:flex; align-items:center; gap:6px; transition:background 0.15s;
-  }
-  .hdr-btn:hover { background:var(--surf2); color:var(--ink); }
-  .hdr-btn.primary { background:var(--green); color:#fff; border-color:var(--green); }
-  .hdr-btn.primary:hover { background:#158a5e; }
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg:       #131722;
+  --surf:     #1e222d;
+  --surf2:    #2a2e39;
+  --surf3:    #363a45;
+  --ink:      #d1d4dc;
+  --ink2:     #787b86;
+  --ink3:     #4e5263;
+  --bdr:      rgba(255,255,255,0.06);
+  --bdr2:     rgba(255,255,255,0.12);
+  --green:    #26a69a;
+  --green-bg: rgba(38,166,154,0.12);
+  --green-dk: #1a7a70;
+  --red:      #ef5350;
+  --red-bg:   rgba(239,83,80,0.12);
+  --blue:     #2962ff;
+  --r-sm:5px; --r-md:8px; --r-lg:12px;
+  font-family:-apple-system,BlinkMacSystemFont,'Trebuchet MS','Segoe UI',sans-serif;
+  font-size:13px; color:var(--ink); background:var(--bg);
+}
+[data-theme="light"] {
+  --bg:    #f0f3fa;
+  --surf:  #ffffff;
+  --surf2: #f0f3fa;
+  --surf3: #e0e3eb;
+  --ink:   #131722;
+  --ink2:  #787b86;
+  --ink3:  #b2b5be;
+  --bdr:   rgba(0,0,0,0.06);
+  --bdr2:  rgba(0,0,0,0.12);
+  --green-bg: rgba(38,166,154,0.1);
+  --red-bg:   rgba(239,83,80,0.1);
+}
 
-  /* status */
-  .status-banner {
-    border-radius:var(--r-md); padding:10px 14px; font-size:13px;
-    display:flex; align-items:center; gap:8px; margin-bottom:16px;
-  }
-  .status-banner.loading { background:var(--surf2); color:var(--ink2); }
-  .status-banner.error   { background:var(--red-bg); color:var(--red); }
-  .status-banner.ok      { background:var(--green-bg); color:var(--green-dark); }
-  .status-banner i { font-size:16px; flex-shrink:0; }
+body { min-height:100vh; }
+.page { max-width:1200px; margin:0 auto; padding:0 16px 60px; }
 
-  /* upload panel */
-  .upload-panel {
-    background:var(--surf); border:1px solid var(--bdr);
-    border-radius:var(--r-lg); padding:20px; margin-bottom:16px; display:none;
-  }
-  .upload-panel.open { display:block; }
-  .panel-title { font-size:12px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:4px; }
-  .panel-hint  { font-size:12px; color:var(--ink3); margin-bottom:16px; }
-  .upload-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
-  .ucard { border:1px solid var(--bdr); border-radius:var(--r-lg); padding:14px; transition:border-color 0.2s; }
-  .ucard.done { border-color:var(--green); }
-  .ucard-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-  .src-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .dot-tv{background:#378ADD} .dot-mu{background:#7F77DD} .dot-xt{background:#E8960A}
-  .src-label { font-size:11px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.07em; }
-  .src-info { margin-left:auto; font-size:10px; color:var(--ink3); text-align:right; }
-  .tick { color:var(--green); font-size:16px; display:none; }
-  .ucard.done .tick { display:block; }
-  .dz {
-    border:1.5px dashed var(--bdr2); border-radius:var(--r-md);
-    padding:14px 10px; text-align:center; cursor:pointer; transition:background 0.15s;
-  }
-  .dz:hover { background:var(--surf2); }
-  .dz i { font-size:20px; color:var(--ink3); display:block; margin-bottom:5px; }
-  .dz-label { font-size:11px; color:var(--ink3); line-height:1.5; }
-  .dz.loaded i { color:var(--green); }
-  .dz.loaded .dz-label { color:var(--green); font-weight:500; }
-  .dz input { display:none; }
+/* ── Topbar ──────────────────────────────────────────────────────────────── */
+.topbar {
+  display:flex; align-items:center; height:52px;
+  border-bottom:1px solid var(--bdr); margin-bottom:20px;
+  gap:16px;
+}
+.brand { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.brand-icon {
+  width:28px; height:28px; background:var(--green);
+  border-radius:6px; display:flex; align-items:center; justify-content:center;
+}
+.brand-icon i { font-size:15px; color:#fff; }
+.brand-name { font-size:15px; font-weight:700; letter-spacing:-0.01em; color:var(--ink); }
+.brand-sub { font-size:11px; color:var(--ink2); }
+.topbar-sep { width:1px; height:20px; background:var(--bdr2); }
+.topbar-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.last-run { font-size:11px; color:var(--ink3); }
 
-  .panel-bottom { display:flex; gap:10px; align-items:flex-end; }
-  .secret-group { flex:1; }
-  .secret-group label { font-size:11px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.06em; display:block; margin-bottom:6px; }
-  .secret-inp {
-    width:100%; height:36px; font-size:13px;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf2); color:var(--ink); padding:0 10px; outline:none;
-  }
-  .secret-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
-  .panel-actions { display:flex; gap:8px; }
-  .act-btn {
-    height:36px; padding:0 18px; font-size:13px; font-weight:600;
-    border:none; border-radius:var(--r-sm); cursor:pointer;
-    display:flex; align-items:center; gap:6px; white-space:nowrap;
-    transition:background 0.15s, transform 0.1s;
-  }
-  .act-btn:active { transform:scale(0.97); }
-  .act-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-  .btn-upload { background:var(--surf2); color:var(--ink); border:1px solid var(--bdr2); }
-  .btn-upload:hover:not(:disabled) { background:var(--surf3); }
-  .btn-process { background:var(--green); color:#fff; }
-  .btn-process:hover:not(:disabled) { background:#158a5e; }
+.hdr-btn {
+  height:28px; padding:0 10px; font-size:12px; font-weight:500;
+  border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:transparent; color:var(--ink2); cursor:pointer;
+  display:flex; align-items:center; gap:5px; transition:all 0.12s;
+}
+.hdr-btn:hover { background:var(--surf2); color:var(--ink); border-color:var(--bdr2); }
+.hdr-btn.green { background:var(--green); color:#fff; border-color:var(--green); }
+.hdr-btn.green:hover { opacity:0.88; }
 
-  /* filter bar */
-  .filter-bar {
-    background:var(--surf); border:1px solid var(--bdr);
-    border-radius:var(--r-lg); padding:16px;
-    display:grid; grid-template-columns:1fr auto;
-    gap:12px; align-items:end; margin-bottom:16px;
-  }
-  .fgroup label { font-size:11px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.06em; display:block; margin-bottom:6px; }
-  .fgroup select {
-    width:100%; height:36px; font-size:13px;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf2); color:var(--ink);
-    padding:0 10px; outline:none; appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b65' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 10px center;
-  }
-  .run-btn {
-    height:36px; padding:0 22px; font-size:13px; font-weight:600;
-    background:var(--green); color:#fff; border:none;
-    border-radius:var(--r-sm); cursor:pointer; white-space:nowrap;
-    display:flex; align-items:center; gap:6px; transition:background 0.15s;
-  }
-  .run-btn:hover { background:#158a5e; }
+/* Theme toggle */
+.theme-btn {
+  width:28px; height:28px; border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:transparent; color:var(--ink2); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all 0.12s;
+}
+.theme-btn:hover { background:var(--surf2); color:var(--ink); }
+.theme-btn .ti-sun  { display:none; }
+.theme-btn .ti-moon { display:block; }
+[data-theme="light"] .theme-btn .ti-sun  { display:block; }
+[data-theme="light"] .theme-btn .ti-moon { display:none; }
 
-  /* stats */
-  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
-  .scard { background:var(--surf); border:1px solid var(--bdr); border-radius:var(--r-lg); padding:14px 16px; }
-  .scard-val { font-size:28px; font-weight:600; letter-spacing:-0.03em; color:var(--ink); line-height:1; }
-  .scard-val.green { color:var(--green); }
-  .scard-label { font-size:11px; color:var(--ink2); margin-top:6px; display:flex; align-items:center; gap:5px; }
-  .scard-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+/* ── Status ──────────────────────────────────────────────────────────────── */
+.status-banner {
+  border-radius:var(--r-md); padding:8px 12px; font-size:12px;
+  display:flex; align-items:center; gap:8px; margin-bottom:14px;
+}
+.status-banner.loading { background:var(--surf2); color:var(--ink2); }
+.status-banner.error   { background:var(--red-bg); color:var(--red); }
+.status-banner.ok      { background:var(--green-bg); color:var(--green); }
+.status-banner i { font-size:14px; flex-shrink:0; }
 
-  /* toolbar */
-  .toolbar { display:flex; gap:8px; margin-bottom:10px; align-items:center; }
-  .search-inp {
-    flex:1; height:36px; font-size:13px;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf); color:var(--ink); padding:0 10px 0 34px; outline:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a8a8a0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:10px center;
-  }
-  .search-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
-  .sec-sel {
-    height:36px; font-size:13px; min-width:160px;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf); color:var(--ink); padding:0 28px 0 10px; outline:none; appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b65' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 10px center;
-  }
-  .export-btn {
-    height:36px; padding:0 16px; font-size:13px; font-weight:500;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf); color:var(--ink2); cursor:pointer;
-    display:flex; align-items:center; gap:6px; transition:background 0.15s;
-  }
-  .export-btn:hover { background:var(--surf2); color:var(--ink); }
+/* ── Upload panel ────────────────────────────────────────────────────────── */
+.upload-panel {
+  background:var(--surf); border:1px solid var(--bdr);
+  border-radius:var(--r-lg); padding:18px; margin-bottom:14px; display:none;
+}
+.upload-panel.open { display:block; }
+.panel-title { font-size:11px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:3px; }
+.panel-hint  { font-size:11px; color:var(--ink3); margin-bottom:14px; }
+.upload-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+.ucard { border:1px solid var(--bdr); border-radius:var(--r-md); padding:12px; transition:border-color 0.2s; }
+.ucard.done { border-color:var(--green); }
+.ucard-head { display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+.src-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dot-tv{background:#2962ff} .dot-mu{background:#7B1FA2} .dot-xt{background:#F57C00}
+.src-label { font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:0.08em; }
+.src-info { margin-left:auto; font-size:10px; color:var(--ink3); }
+.tick { color:var(--green); font-size:14px; display:none; }
+.ucard.done .tick { display:block; }
+.dz {
+  border:1.5px dashed var(--bdr2); border-radius:var(--r-sm);
+  padding:12px 8px; text-align:center; cursor:pointer; transition:background 0.12s;
+}
+.dz:hover { background:var(--surf2); }
+.dz i { font-size:18px; color:var(--ink3); display:block; margin-bottom:4px; }
+.dz-label { font-size:10px; color:var(--ink3); line-height:1.5; }
+.dz.loaded i { color:var(--green); }
+.dz.loaded .dz-label { color:var(--green); font-weight:500; }
+.dz input { display:none; }
+.panel-bottom { display:flex; gap:8px; justify-content:flex-end; }
+.act-btn {
+  height:32px; padding:0 16px; font-size:12px; font-weight:600;
+  border:none; border-radius:var(--r-sm); cursor:pointer;
+  display:flex; align-items:center; gap:5px; white-space:nowrap;
+  transition:background 0.12s, opacity 0.12s;
+}
+.act-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.btn-upload { background:var(--surf3); color:var(--ink); border:1px solid var(--bdr2); }
+.btn-upload:hover:not(:disabled) { background:var(--surf2); }
+.btn-process { background:var(--green); color:#fff; }
+.btn-process:hover:not(:disabled) { opacity:0.88; }
 
-  /* table */
-  .tbl-outer { background:var(--surf); border:1px solid var(--bdr); border-radius:var(--r-lg); overflow:hidden; }
-  .tbl-wrap { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; }
-  thead { background:var(--surf2); }
-  th {
-    font-size:10px; font-weight:600; color:var(--ink2);
-    text-transform:uppercase; letter-spacing:0.08em;
-    padding:10px 14px; text-align:left; white-space:nowrap;
-    cursor:pointer; user-select:none; border-bottom:1px solid var(--bdr); transition:color 0.15s;
-  }
-  th:hover { color:var(--ink); }
-  td { font-size:13px; padding:10px 14px; border-bottom:1px solid var(--bdr); white-space:nowrap; }
-  tr:last-child td { border-bottom:none; }
-  tr:hover td { background:#fafafa; }
-  .tkr { font-weight:600; font-family:'SF Mono','Fira Code',monospace; font-size:13px; }
-  .co-name { font-size:12px; color:var(--ink2); max-width:170px; overflow:hidden; text-overflow:ellipsis; display:block; }
-  .mcap-val { font-size:12px; color:var(--ink2); font-variant-numeric:tabular-nums; }
-  .rbadge { display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; min-width:36px; }
-  .r9{background:#d4edda;color:#155724} .r8{background:#c3e6cb;color:#0d4a1c}
-  .r7{background:#d1ecf1;color:#0c5460} .r6{background:#cce5ff;color:#004085}
-  .r5{background:#b8daff;color:#002752} .r4{background:#e2d9f3;color:#3d1a7a}
-  .r3{background:#ffeeba;color:#856404} .r2{background:#ffd98a;color:#6d4c00}
-  .r1{background:#f5c6cb;color:#721c24}
-  .sig { font-size:11px; font-weight:500; padding:2px 9px; border-radius:999px; white-space:nowrap; }
-  .sig-sbuy{background:#cce5ff;color:#004085}
-  .sig-buy{background:#d4edda;color:#155724}
-  .sig-other{background:var(--surf2);color:var(--ink2)}
-  .sect-pill { font-size:11px; color:var(--ink2); }
-  .empty { padding:48px; text-align:center; color:var(--ink3); }
-  .empty i { font-size:36px; display:block; margin-bottom:10px; opacity:0.35; }
-  .empty p { font-size:13px; }
-  .foot { font-size:11px; color:var(--ink3); text-align:right; padding:8px 14px; border-top:1px solid var(--bdr); }
+/* ── Stats / Tab cards ───────────────────────────────────────────────────── */
+.stats-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:1px; background:var(--bdr); border:1px solid var(--bdr);
+  border-radius:var(--r-lg); overflow:hidden; margin-bottom:1px;
+}
+.scard {
+  background:var(--surf); padding:14px 16px;
+  cursor:pointer; transition:background 0.12s; position:relative;
+}
+.scard:hover { background:var(--surf2); }
+.scard.active { background:var(--surf2); }
+.scard.active::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:2px; background:var(--green);
+}
+.scard-val { font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--ink); line-height:1.1; }
+.scard.active .scard-val { color:var(--green); }
+.scard-label { font-size:11px; color:var(--ink2); margin-top:4px; display:flex; align-items:center; gap:4px; }
+.scard-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 
-  /* tab content */
-  .tab-search {
-    display:flex; gap:8px; margin-bottom:10px; align-items:center;
-  }
-  .tab-search-inp {
-    flex:1; height:36px; font-size:13px;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf); color:var(--ink); padding:0 10px 0 34px; outline:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a8a8a0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:10px center;
-  }
-  .tab-search-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
+/* ── Tab toolbar ─────────────────────────────────────────────────────────── */
+.tab-toolbar {
+  display:flex; gap:8px; align-items:center;
+  padding:10px 0; border-bottom:1px solid var(--bdr); margin-bottom:0;
+}
+.tab-search-inp {
+  flex:1; height:32px; font-size:12px;
+  border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:var(--surf2); color:var(--ink);
+  padding:0 10px 0 30px; outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%23787b86' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:9px center;
+  transition:border-color 0.12s;
+}
+.tab-search-inp:focus { border-color:var(--green); outline:none; }
+.tab-select {
+  height:32px; font-size:12px; min-width:140px;
+  border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:var(--surf2); color:var(--ink);
+  padding:0 24px 0 8px; outline:none; appearance:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23787b86' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 8px center;
+}
+.tab-btn {
+  height:32px; padding:0 12px; font-size:12px; font-weight:500;
+  border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:transparent; color:var(--ink2); cursor:pointer;
+  display:flex; align-items:center; gap:5px; transition:all 0.12s; white-space:nowrap;
+}
+.tab-btn:hover { background:var(--surf2); color:var(--ink); }
+.tab-btn.green { background:var(--green); color:#fff; border-color:var(--green); }
+.tab-btn.green:hover { opacity:0.88; }
 
-  /* stats card as tab */
-  .scard { cursor:default; }
-  .scard.tab { cursor:pointer; transition:border-color 0.15s, box-shadow 0.15s; }
-  .scard.tab:hover { border-color:var(--bdr2); box-shadow:0 2px 8px rgba(0,0,0,0.07); }
-  .scard.tab.active { border-color:var(--green); box-shadow:0 0 0 2px rgba(26,158,110,0.15); }
-  .scard.tab.active .scard-val { color:var(--green); }
+/* Filter bar */
+.filter-bar {
+  display:flex; gap:8px; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--bdr);
+}
+.filter-label { font-size:11px; color:var(--ink2); white-space:nowrap; }
 
-  /* modal secret key */
-  .modal-overlay {
-    position:fixed; inset:0; background:rgba(0,0,0,0.4);
-    display:flex; align-items:center; justify-content:center;
-    z-index:100; opacity:0; pointer-events:none; transition:opacity 0.2s;
-  }
-  .modal-overlay.open { opacity:1; pointer-events:all; }
-  .modal {
-    background:var(--surf); border-radius:var(--r-lg);
-    padding:28px; width:100%; max-width:380px; margin:16px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.18);
-    transform:translateY(8px); transition:transform 0.2s;
-  }
-  .modal-overlay.open .modal { transform:translateY(0); }
-  .modal-title { font-size:15px; font-weight:600; margin-bottom:6px; }
-  .modal-sub { font-size:13px; color:var(--ink2); margin-bottom:20px; }
-  .modal-inp {
-    width:100%; height:40px; font-size:14px;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf2); color:var(--ink); padding:0 12px; outline:none;
-    margin-bottom:12px;
-  }
-  .modal-inp:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(26,158,110,0.12); }
-  .modal-err { font-size:12px; color:var(--red); margin-bottom:10px; display:none; }
-  .modal-err.show { display:block; }
-  .modal-actions { display:flex; gap:8px; justify-content:flex-end; }
-  .modal-cancel {
-    height:36px; padding:0 16px; font-size:13px;
-    border:1px solid var(--bdr2); border-radius:var(--r-sm);
-    background:var(--surf); color:var(--ink2); cursor:pointer;
-  }
-  .modal-cancel:hover { background:var(--surf2); }
-  .modal-confirm {
-    height:36px; padding:0 20px; font-size:13px; font-weight:600;
-    background:var(--green); color:#fff; border:none;
-    border-radius:var(--r-sm); cursor:pointer; transition:background 0.15s;
-  }
-  .modal-confirm:hover { background:#158a5e; }
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.tbl-outer { background:var(--surf); border:1px solid var(--bdr); border-top:none; overflow:hidden; border-radius:0 0 var(--r-lg) var(--r-lg); }
+.tbl-wrap  { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+thead { background:var(--surf); position:sticky; top:0; z-index:1; }
+th {
+  font-size:11px; font-weight:500; color:var(--ink2);
+  padding:10px 12px; text-align:left; white-space:nowrap;
+  cursor:pointer; user-select:none;
+  border-bottom:1px solid var(--bdr);
+  transition:color 0.12s; position:relative;
+}
+th:hover { color:var(--ink); }
+th.sort-asc::after  { content:' ↑'; color:var(--green); }
+th.sort-desc::after { content:' ↓'; color:var(--green); }
+td {
+  font-size:12px; padding:9px 12px;
+  border-bottom:1px solid var(--bdr); color:var(--ink);
+  white-space:nowrap;
+}
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--surf2); }
+.tkr {
+  font-weight:600; font-family:'Trebuchet MS',monospace; font-size:12px;
+  color:var(--ink);
+}
+.co-name {
+  font-size:11px; color:var(--ink2);
+  max-width:180px; overflow:hidden; text-overflow:ellipsis; display:block;
+}
+.num { font-variant-numeric:tabular-nums; font-size:12px; }
+.mcap-val { font-size:11px; color:var(--ink2); font-variant-numeric:tabular-nums; }
 
-  @media(max-width:640px){
-    .upload-grid{grid-template-columns:1fr}
-    .filter-bar{grid-template-columns:1fr}
-    .stats-grid{grid-template-columns:repeat(2,1fr)}
-    .toolbar{flex-wrap:wrap}
-    .panel-bottom{flex-direction:column}
-    .panel-actions{width:100%}
-  }
+/* Rating badges — TV style */
+.rbadge {
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; padding:2px 7px;
+  border-radius:3px; min-width:32px; letter-spacing:0.02em;
+}
+.r9{background:rgba(38,166,154,0.2);color:#26a69a}
+.r8{background:rgba(38,166,154,0.15);color:#26a69a}
+.r7{background:rgba(41,182,246,0.15);color:#29b6f6}
+.r6{background:rgba(41,182,246,0.12);color:#29b6f6}
+.r5{background:rgba(41,98,255,0.15);color:#5c8bff}
+.r4{background:rgba(41,98,255,0.12);color:#5c8bff}
+.r3{background:rgba(255,152,0,0.15);color:#ffa726}
+.r2{background:rgba(255,152,0,0.12);color:#ffa726}
+.r1{background:rgba(239,83,80,0.15);color:#ef5350}
+
+/* Signal badges */
+.sig {
+  font-size:10px; font-weight:600; padding:2px 7px;
+  border-radius:3px; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;
+}
+.sig::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.sig-sbuy  { background:rgba(41,98,255,0.15); color:#5c8bff; }
+.sig-sbuy::before { background:#5c8bff; }
+.sig-buy   { background:rgba(38,166,154,0.15); color:#26a69a; }
+.sig-buy::before { background:#26a69a; }
+.sig-neu   { background:rgba(120,123,134,0.15); color:#787b86; }
+.sig-neu::before { background:#787b86; }
+.sig-sell  { background:rgba(239,83,80,0.12); color:#ef5350; }
+.sig-sell::before { background:#ef5350; }
+
+.sect-pill { font-size:11px; color:var(--ink2); }
+.chg-up   { color:var(--green); font-variant-numeric:tabular-nums; }
+.chg-dn   { color:var(--red);   font-variant-numeric:tabular-nums; }
+.chg-flat { color:var(--ink2);  font-variant-numeric:tabular-nums; }
+
+.empty { padding:48px; text-align:center; color:var(--ink3); }
+.empty i { font-size:32px; display:block; margin-bottom:8px; opacity:0.4; }
+.empty p  { font-size:12px; }
+.foot {
+  font-size:11px; color:var(--ink3); text-align:right;
+  padding:7px 12px; border-top:1px solid var(--bdr);
+  background:var(--surf);
+}
+
+/* ── Modal ───────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.6);
+  display:flex; align-items:center; justify-content:center;
+  z-index:100; opacity:0; pointer-events:none; transition:opacity 0.15s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal {
+  background:var(--surf); border:1px solid var(--bdr2);
+  border-radius:var(--r-lg); padding:24px;
+  width:100%; max-width:360px; margin:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  transform:translateY(6px); transition:transform 0.15s;
+}
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal-title { font-size:14px; font-weight:600; color:var(--ink); margin-bottom:4px; }
+.modal-sub   { font-size:12px; color:var(--ink2); margin-bottom:16px; }
+.modal-inp {
+  width:100%; height:36px; font-size:13px;
+  border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:var(--surf2); color:var(--ink);
+  padding:0 10px; outline:none; margin-bottom:10px;
+  transition:border-color 0.12s;
+}
+.modal-inp:focus { border-color:var(--green); }
+.modal-err { font-size:11px; color:var(--red); margin-bottom:8px; display:none; }
+.modal-err.show { display:block; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+.modal-cancel {
+  height:32px; padding:0 14px; font-size:12px;
+  border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:transparent; color:var(--ink2); cursor:pointer; transition:all 0.12s;
+}
+.modal-cancel:hover { background:var(--surf2); color:var(--ink); }
+.modal-confirm {
+  height:32px; padding:0 18px; font-size:12px; font-weight:600;
+  background:var(--green); color:#fff; border:none;
+  border-radius:var(--r-sm); cursor:pointer; transition:opacity 0.12s;
+}
+.modal-confirm:hover { opacity:0.88; }
+
+@media(max-width:640px){
+  .upload-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .tab-toolbar{flex-wrap:wrap}
+  .panel-bottom{flex-direction:column}
+}
 </style>
 </head>
 <body>
 
-<!-- modal secret key -->
+<!-- Modal secret key -->
 <div class="modal-overlay" id="secret-modal" onclick="modalClickOutside(event)">
   <div class="modal">
-    <div class="modal-title"><i class="ti ti-lock" style="margin-right:6px"></i>Masukkan Secret Key</div>
+    <div class="modal-title"><i class="ti ti-lock" style="margin-right:6px;font-size:13px"></i>Masukkan Secret Key</div>
     <div class="modal-sub">Diperlukan untuk mengakses panel update data.</div>
     <input class="modal-inp" type="password" id="modal-key" placeholder="Secret key..."
       onkeydown="if(event.key==='Enter')confirmSecret()">
@@ -278,34 +342,40 @@
     </div>
   </div>
 </div>
-<!-- drawer removed, replaced by tab switcher -->
 
 <div class="page">
 
+  <!-- Topbar -->
   <div class="topbar">
     <div class="brand">
       <div class="brand-icon"><i class="ti ti-moon-stars"></i></div>
       <div>
-        <div class="brand-name">Halal Stock Screener</div>
+        <div class="brand-name">Halal Screener</div>
         <div class="brand-sub">TradingView · Musaffa · XTB</div>
       </div>
     </div>
+    <div class="topbar-sep"></div>
     <div class="topbar-right">
-      <div class="last-run" id="last-run"></div>
+      <span class="last-run" id="last-run"></span>
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+        <i class="ti ti-sun"  style="font-size:14px"></i>
+        <i class="ti ti-moon" style="font-size:14px"></i>
+      </button>
       <button class="hdr-btn" onclick="toggleUpload()">
-        <i class="ti ti-upload" style="font-size:13px"></i> Update Data
+        <i class="ti ti-upload" style="font-size:12px"></i> Update Data
       </button>
     </div>
   </div>
 
+  <!-- Status -->
   <div class="status-banner loading" id="status-banner">
     <i class="ti ti-loader-2"></i><span id="status-text">Memuat data saham...</span>
   </div>
 
-  <!-- upload panel -->
+  <!-- Upload panel -->
   <div class="upload-panel" id="upload-panel">
     <div class="panel-title">Update Data</div>
-    <div class="panel-hint">Upload file yang berubah saja. Klik <b>Simpan Raw</b> per sumber, lalu <b>Proses</b> untuk merge dan tampilkan hasilnya.</div>
+    <div class="panel-hint">Upload file yang berubah saja. Klik Simpan Raw per sumber, lalu Proses untuk merge.</div>
     <div class="upload-grid">
       <div class="ucard" id="uc-tv">
         <div class="ucard-head">
@@ -348,77 +418,69 @@
       </div>
     </div>
     <div class="panel-bottom">
-      <div class="panel-actions">
-        <button class="act-btn btn-upload" id="upload-btn" onclick="uploadRaw()" disabled>
-          <i class="ti ti-cloud-upload" style="font-size:14px"></i>
-          <span id="upload-label">Simpan Raw</span>
-        </button>
-        <button class="act-btn btn-process" id="process-btn" onclick="processData()">
-          <i class="ti ti-cpu" style="font-size:14px"></i>
-          <span id="process-label">Proses</span>
-        </button>
-      </div>
+      <button class="act-btn btn-upload" id="upload-btn" onclick="uploadRaw()" disabled>
+        <i class="ti ti-cloud-upload" style="font-size:13px"></i>
+        <span id="upload-label">Simpan Raw</span>
+      </button>
+      <button class="act-btn btn-process" id="process-btn" onclick="processData()">
+        <i class="ti ti-cpu" style="font-size:13px"></i>
+        <span id="process-label">Proses</span>
+      </button>
     </div>
   </div>
 
-  <!-- stats as tab switcher -->
+  <!-- Stats / Tab cards -->
   <div class="stats-grid" id="stats-grid" style="display:none">
-    <div class="scard tab" id="tab-tv" onclick="switchTab('tv')">
+    <div class="scard" id="tab-tv" onclick="switchTab('tv')">
       <div class="scard-val" id="st-tv">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#378ADD"></span>Dari TradingView</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#2962ff"></span>TradingView</div>
     </div>
-    <div class="scard tab" id="tab-mu" onclick="switchTab('mu')">
+    <div class="scard" id="tab-mu" onclick="switchTab('mu')">
       <div class="scard-val" id="st-halal">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#7F77DD"></span>Halal di Musaffa</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#7B1FA2"></span>Halal di Musaffa</div>
     </div>
-    <div class="scard tab" id="tab-xt" onclick="switchTab('xt')">
+    <div class="scard" id="tab-xt" onclick="switchTab('xt')">
       <div class="scard-val" id="st-xtb">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#E8960A"></span>Tersedia di XTB</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#F57C00"></span>Tersedia di XTB</div>
     </div>
-    <div class="scard tab active" id="tab-result" onclick="switchTab('result')">
-      <div class="scard-val green" id="st-final">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#1a9e6e"></span>Lolos semua filter</div>
+    <div class="scard active" id="tab-result" onclick="switchTab('result')">
+      <div class="scard-val" id="st-final">0</div>
+      <div class="scard-label"><span class="scard-dot" style="background:#26a69a"></span>Lolos Filter</div>
     </div>
   </div>
 
-  <!-- tab content area -->
+  <!-- Tab content -->
   <div id="tab-content" style="display:none">
 
-    <!-- filter bar — hanya tampil di tab result -->
+    <!-- Filter bar (result only) -->
     <div class="filter-bar" id="filter-bar" style="display:none">
-      <div class="fgroup">
-        <label>Rating Musaffa minimum</label>
-        <select id="f-rating" onchange="renderTable()">
-          <option value="1">Semua halal (C− ke atas)</option>
-          <option value="4">B− ke atas</option>
-          <option value="5">B ke atas</option>
-          <option value="7">A− ke atas</option>
-          <option value="8">A ke atas</option>
-          <option value="9">A+ saja</option>
-        </select>
-      </div>
-      <button class="run-btn" onclick="renderTable()">
-        <i class="ti ti-filter" style="font-size:14px"></i> Filter
-      </button>
+      <span class="filter-label">Rating minimum</span>
+      <select class="tab-select" id="f-rating" onchange="renderActiveTab()" style="min-width:180px">
+        <option value="1">Semua halal (C− ke atas)</option>
+        <option value="4">B− ke atas</option>
+        <option value="5">B ke atas</option>
+        <option value="7">A− ke atas</option>
+        <option value="8">A ke atas</option>
+        <option value="9">A+ saja</option>
+      </select>
     </div>
 
-    <!-- toolbar search -->
-    <div class="tab-search" id="tab-search-bar">
+    <!-- Toolbar -->
+    <div class="tab-toolbar">
       <input class="tab-search-inp" id="tab-srch" placeholder="Cari ticker / nama..." oninput="debounceTabSearch()">
-      <select class="sec-sel" id="sec-filter" onchange="renderActiveTab()" style="display:none">
+      <select class="tab-select" id="sec-filter" onchange="renderActiveTab()" style="display:none">
         <option value="all">Semua sektor</option>
       </select>
-      <button class="export-btn" id="export-btn" onclick="exportCSV()" style="display:none">
-        <i class="ti ti-download" style="font-size:14px"></i> Export CSV
+      <button class="tab-btn" id="export-btn" onclick="exportCSV()" style="display:none">
+        <i class="ti ti-download" style="font-size:12px"></i> Export CSV
       </button>
     </div>
 
-    <!-- content -->
     <div id="tab-result-wrap"></div>
-
   </div>
 
 </div>
+
 <script>
 // ─── Konstanta ────────────────────────────────────────────────────────────────
 const RSCORE = {'A+':9,'A':8,'A-':7,'B+':6,'B':5,'B-':4,'C+':3,'C':2,'C-':1};
@@ -426,14 +488,32 @@ const RCLS   = {9:'r9',8:'r8',7:'r7',6:'r6',5:'r5',4:'r4',3:'r3',2:'r2',1:'r1'};
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let allStocks = [], results = [];
-let sortCol = 'score', sortDir = -1;
 let uploadDone = {tv:false, mu:false, xt:false};
 let UPLOAD_DATA = {tv:[], mu:[], xt:[]};
-let _searchTimer = null;
 let _dbStats = {statTV:0, statHalal:0, statXTB:0};
 let _dbTV = [], _dbMusaffa = [], _dbXTB = [];
 let _activeTab = 'result';
-let _tabTimer = null;
+let _tabTimer = null, _sessionSecret = '';
+
+// Sort state per tab
+const _sort = {
+  tv:     {col:'ticker', dir:1},
+  mu:     {col:'rating', dir:-1},
+  xt:     {col:'ticker', dir:1},
+  result: {col:'score',  dir:-1},
+};
+
+// ─── Theme ────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('hs-theme', next);
+}
+(function(){
+  const saved = localStorage.getItem('hs-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
@@ -446,18 +526,18 @@ async function init() {
     _dbTV      = json.tv      || [];
     _dbMusaffa = json.musaffa || [];
     _dbXTB     = json.xtb     || [];
-    _dbStats   = { statTV: json.statTV||0, statHalal: json.statHalal||0, statXTB: json.statXTB||0 };
+    _dbStats   = {statTV:json.statTV||0, statHalal:json.statHalal||0, statXTB:json.statXTB||0};
 
     const updatedAt = json.updatedAt
       ? new Date(json.updatedAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
       : null;
 
     if (!allStocks.length) {
-      showStatus('ok','Database kosong. Upload data lewat tombol Update Data, lalu klik Proses.');
-      document.getElementById('result-wrap').innerHTML = '<div class="empty"><i class="ti ti-database-off"></i><p>Belum ada data.</p></div>';
+      showStatus('ok','Database kosong. Upload data lewat tombol Update Data.');
+      document.getElementById('tab-result-wrap').innerHTML = '<div class="empty"><i class="ti ti-database-off"></i><p>Belum ada data.</p></div>';
     } else {
-      showStatus('ok', `${allStocks.length} saham dimuat` + (updatedAt ? ` · Diperbarui ${updatedAt}` : ''));
-      document.getElementById('last-run').textContent = updatedAt ? 'Update: '+updatedAt : '';
+      showStatus('ok', `${allStocks.length} saham · ${updatedAt||''}`);
+      document.getElementById('last-run').textContent = updatedAt ? updatedAt : '';
       buildSectorOptions();
       buildStats();
       switchTab('result');
@@ -465,7 +545,7 @@ async function init() {
     }
   } catch(err) {
     showStatus('error','Gagal memuat data: '+err.message);
-    document.getElementById('result-wrap').innerHTML = '<div class="empty"><i class="ti ti-wifi-off"></i><p>Koneksi ke database gagal.</p></div>';
+    document.getElementById('tab-result-wrap').innerHTML = '<div class="empty"><i class="ti ti-wifi-off"></i><p>Koneksi gagal.</p></div>';
   }
 }
 
@@ -476,7 +556,7 @@ function showStatus(type, msg) {
   el.innerHTML = `<i class="ti ${ico[type]}"></i><span>${msg}</span>`;
 }
 
-// ─── Sector & Stats ───────────────────────────────────────────────────────────
+// ─── Sector options ───────────────────────────────────────────────────────────
 function buildSectorOptions() {
   const sectors = [...new Set(allStocks.map(r=>r.sector).filter(Boolean))].sort();
   const sel = document.getElementById('sec-filter');
@@ -484,6 +564,7 @@ function buildSectorOptions() {
     + sectors.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
 
+// ─── Stats ────────────────────────────────────────────────────────────────────
 function buildStats() {
   const minScore = parseInt(document.getElementById('f-rating').value)||1;
   document.getElementById('st-tv').textContent    = _dbStats.statTV;
@@ -504,34 +585,71 @@ function fmtMcap(v) {
 }
 function fmtChg(v) {
   const n = parseFloat(v);
-  if (isNaN(n)) return '<span style="color:var(--ink3)">—</span>';
+  if (isNaN(n)) return '<span class="chg-flat">—</span>';
   const sign = n>0?'+':'';
-  const cls  = n>0?'color:var(--green)':n<0?'color:var(--red)':'color:var(--ink2)';
-  return `<span style="${cls};font-variant-numeric:tabular-nums">${sign}${n.toFixed(2)}%</span>`;
+  const cls  = n>0?'chg-up':n<0?'chg-dn':'chg-flat';
+  return `<span class="${cls}">${sign}${n.toFixed(2)}%</span>`;
 }
-function sigCls(s) {
-  const sl = String(s||'').toLowerCase();
-  return sl==='strong buy'?'sig sig-sbuy':sl==='buy'?'sig sig-buy':'sig sig-other';
+function fmtSig(s) {
+  const sl = (s||'').toLowerCase();
+  const cls = sl==='strong buy'?'sig-sbuy':sl==='buy'?'sig-buy':sl==='sell'||sl==='strong sell'?'sig-sell':'sig-neu';
+  return `<span class="sig ${cls}">${s||'—'}</span>`;
 }
 function extLink(href, content) {
   return href
-    ? `<a href="${href}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dashed var(--bdr2)">${content}</a>`
+    ? `<a href="${href}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${content}</a>`
     : content;
 }
 
-// ─── Render tabel ─────────────────────────────────────────────────────────────
-function debounceSearch() {
-  clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(()=>renderTable(), 300);
+// ─── Tab switcher ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  _activeTab = tab;
+  document.getElementById('tab-srch').value = '';
+
+  ['tv','mu','xt','result'].forEach(t =>
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab));
+
+  document.getElementById('filter-bar').style.display  = tab==='result' ? 'flex' : 'none';
+  document.getElementById('sec-filter').style.display  = tab==='result' ? ''     : 'none';
+  document.getElementById('export-btn').style.display  = tab==='result' ? 'flex' : 'none';
+
+  const ph = {tv:'Cari ticker / nama...', mu:'Cari ticker, nama, sektor...', xt:'Cari ticker / nama...', result:'Cari ticker / nama...'};
+  document.getElementById('tab-srch').placeholder = ph[tab];
+
+  renderActiveTab();
 }
 
-function renderTable() {
-  if (!allStocks.length) return;
-  buildStats();
+function debounceTabSearch() {
+  clearTimeout(_tabTimer);
+  _tabTimer = setTimeout(()=>renderActiveTab(), 250);
+}
 
+function renderActiveTab() {
+  if (_activeTab==='result') renderResult();
+  else renderTabList(_activeTab);
+}
+
+// ─── Sort helper ──────────────────────────────────────────────────────────────
+function setSort(tab, col) {
+  const s = _sort[tab];
+  if (s.col===col) s.dir*=-1;
+  else { s.col=col; s.dir = ['score','mcap','price','chg','signal'].includes(col)?-1:1; }
+  renderActiveTab();
+}
+
+function thSort(tab, col, label) {
+  const s   = _sort[tab];
+  const cls = s.col===col ? (s.dir===1?'sort-asc':'sort-desc') : '';
+  return `<th class="${cls}" onclick="setSort('${tab}','${col}')">${label}</th>`;
+}
+
+// ─── Render: Lolos Filter ─────────────────────────────────────────────────────
+function renderResult() {
+  buildStats();
   const minScore = parseInt(document.getElementById('f-rating').value)||1;
   const q   = document.getElementById('tab-srch').value.toLowerCase().trim();
   const sec = document.getElementById('sec-filter').value;
+  const s   = _sort.result;
 
   results = allStocks.filter(r=>r.score>=minScore);
   let rows = results.filter(r=>{
@@ -540,29 +658,7 @@ function renderTable() {
     return true;
   });
 
-  rows.sort((a,b)=>{
-    switch(sortCol){
-      case 'score':  return (a.score-b.score)*sortDir;
-      case 'ticker': return a.ticker.localeCompare(b.ticker)*sortDir;
-      case 'name':   return (a.name||'').localeCompare(b.name||'')*sortDir;
-      case 'sector': return (a.sector||'').localeCompare(b.sector||'')*sortDir;
-      case 'mcap':   { const av=isNaN(a.mcap)?-1:a.mcap,bv=isNaN(b.mcap)?-1:b.mcap; return (av-bv)*sortDir; }
-      case 'price':  { const av=isNaN(a.price)?-1:a.price,bv=isNaN(b.price)?-1:b.price; return (av-bv)*sortDir; }
-      case 'chg':    {
-        const av=isNaN(parseFloat(a.chg))?-9999:parseFloat(a.chg);
-        const bv=isNaN(parseFloat(b.chg))?-9999:parseFloat(b.chg);
-        return (av-bv)*sortDir;
-      }
-      case 'signal': {
-        const o={'Strong buy':4,'Buy':3,'Neutral':2,'Sell':1,'Strong sell':0};
-        return ((o[a.signal]??-1)-(o[b.signal]??-1))*sortDir;
-      }
-      default: return 0;
-    }
-  });
-
-  const arr = col => col===sortCol?(sortDir===1?' ↑':' ↓'):'';
-  const th  = (col,lbl) => `<th onclick="setSort('${col}')">${lbl}${arr(col)}</th>`;
+  rows.sort((a,b)=>sortFn(a,b,s.col,s.dir,'result'));
 
   const wrap = document.getElementById('tab-result-wrap');
   if (!rows.length) {
@@ -570,69 +666,156 @@ function renderTable() {
     return;
   }
 
-  wrap.innerHTML = `
-    <div class="tbl-outer"><div class="tbl-wrap"><table>
-      <thead><tr>
-        ${th('ticker','Ticker')}${th('name','Nama')}${th('score','Rating')}
-        ${th('price','Price')}${th('chg','Chg %')}${th('mcap','Market Cap')}
-        ${th('signal','TV Signal')}${th('sector','Sektor')}
-      </tr></thead>
-      <tbody>${rows.map(r=>`<tr>
-        <td><span class="tkr">${extLink(r.tvUrl,r.ticker)}</span></td>
-        <td><span class="co-name">${extLink(r.tvUrl,r.name||'—')}</span></td>
-        <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[r.score]||''}">${r.rating}</span>`)}</td>
-        <td>${fmtP(r.price)}</td>
-        <td>${fmtChg(r.chg)}</td>
-        <td><span class="mcap-val">${fmtMcap(r.mcap)}</span></td>
-        <td><span class="${sigCls(r.signal)}">${r.signal||'—'}</span></td>
-        <td><span class="sect-pill">${r.sector||'—'}</span></td>
-      </tr>`).join('')}</tbody>
-    </table></div>
-    <div class="foot">${rows.length} dari ${results.length} saham · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
-    </div>`;
+  wrap.innerHTML = `<div class="tbl-outer"><div class="tbl-wrap"><table>
+    <thead><tr>
+      ${thSort('result','ticker','Ticker')}
+      ${thSort('result','name','Nama')}
+      ${thSort('result','score','Rating')}
+      ${thSort('result','price','Price')}
+      ${thSort('result','chg','Chg %')}
+      ${thSort('result','mcap','Market Cap')}
+      ${thSort('result','signal','TV Signal')}
+      ${thSort('result','sector','Sektor')}
+    </tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><span class="tkr">${extLink(r.tvUrl,r.ticker)}</span></td>
+      <td><span class="co-name">${extLink(r.tvUrl,r.name||'—')}</span></td>
+      <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[r.score]||''}">${r.rating}</span>`)}</td>
+      <td class="num">${fmtP(r.price)}</td>
+      <td>${fmtChg(r.chg)}</td>
+      <td class="mcap-val">${fmtMcap(r.mcap)}</td>
+      <td>${fmtSig(r.signal)}</td>
+      <td><span class="sect-pill">${r.sector||'—'}</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div>
+  <div class="foot">${rows.length} dari ${results.length} saham · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
+  </div>`;
 }
 
-function setSort(col) {
-  if (sortCol===col) sortDir*=-1;
-  else { sortCol=col; sortDir=(col==='score'||col==='signal'||col==='mcap'||col==='chg')?-1:1; }
-  renderTable();
+// ─── Render: Tab list (TV, Musaffa, XTB) ─────────────────────────────────────
+function renderTabList(type) {
+  const q    = document.getElementById('tab-srch').value.toLowerCase().trim();
+  const s    = _sort[type];
+  const wrap = document.getElementById('tab-result-wrap');
+
+  let data, thead, tbodyFn, foot;
+
+  if (type==='tv') {
+    data = _dbTV.filter(r=>!q||r.ticker.toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q));
+    data.sort((a,b)=>sortFn(a,b,s.col,s.dir,'tv'));
+    thead = `<tr>
+      ${thSort('tv','ticker','Ticker')}
+      ${thSort('tv','name','Nama')}
+      ${thSort('tv','price','Price')}
+      ${thSort('tv','chg','Chg %')}
+      ${thSort('tv','mcap','Market Cap')}
+      ${thSort('tv','signal','Signal')}
+    </tr>`;
+    tbodyFn = r=>`<tr>
+      <td><span class="tkr">${extLink(r.tvUrl,r.ticker)}</span></td>
+      <td><span class="co-name">${r.name||'—'}</span></td>
+      <td class="num">${fmtP(r.price)}</td>
+      <td>${fmtChg(r.chg)}</td>
+      <td class="mcap-val">${fmtMcap(r.mcap)}</td>
+      <td>${fmtSig(r.signal)}</td>
+    </tr>`;
+    foot = `${data.length} dari ${_dbTV.length} saham TradingView`;
+
+  } else if (type==='mu') {
+    data = _dbMusaffa.filter(r=>!q||r.ticker.toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q)||(r.sector||'').toLowerCase().includes(q));
+    data.sort((a,b)=>sortFn(a,b,s.col,s.dir,'mu'));
+    thead = `<tr>
+      ${thSort('mu','ticker','Ticker')}
+      ${thSort('mu','name','Nama')}
+      ${thSort('mu','rating','Rating')}
+      ${thSort('mu','sector','Sektor')}
+    </tr>`;
+    tbodyFn = r=>{
+      const score = RSCORE[r.rating]||0;
+      return `<tr>
+        <td><span class="tkr">${extLink(r.muUrl,r.ticker)}</span></td>
+        <td><span class="co-name">${r.name||'—'}</span></td>
+        <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[score]||''}">${r.rating}</span>`)}</td>
+        <td><span class="sect-pill">${r.sector||'—'}</span></td>
+      </tr>`;
+    };
+    foot = `${data.length} dari ${_dbMusaffa.length} saham halal Musaffa`;
+
+  } else {
+    data = _dbXTB.filter(r=>!q||r.ticker.toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q));
+    data.sort((a,b)=>sortFn(a,b,s.col,s.dir,'xt'));
+    thead = `<tr>${thSort('xt','ticker','Ticker')}${thSort('xt','name','Nama')}</tr>`;
+    tbodyFn = r=>`<tr>
+      <td><span class="tkr">${r.ticker}</span></td>
+      <td><span class="co-name">${r.name||'—'}</span></td>
+    </tr>`;
+    foot = `${data.length} dari ${_dbXTB.length} saham XTB`;
+  }
+
+  if (!data.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-mood-empty"></i><p>Tidak ada hasil.</p></div>';
+    return;
+  }
+
+  wrap.innerHTML = `<div class="tbl-outer"><div class="tbl-wrap"><table>
+    <thead>${thead}</thead>
+    <tbody>${data.map(tbodyFn).join('')}</tbody>
+  </table></div>
+  <div class="foot">${foot} · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
+  </div>`;
+}
+
+// ─── Sort function ────────────────────────────────────────────────────────────
+function sortFn(a, b, col, dir, tab) {
+  switch(col) {
+    case 'ticker': return a.ticker.localeCompare(b.ticker)*dir;
+    case 'name':   return (a.name||'').localeCompare(b.name||'')*dir;
+    case 'sector': return (a.sector||'').localeCompare(b.sector||'')*dir;
+    case 'score':  return (a.score-b.score)*dir;
+    case 'rating': {
+      const av=RSCORE[a.rating]||0, bv=RSCORE[b.rating]||0;
+      return (av-bv)*dir;
+    }
+    case 'price':  { const av=isNaN(a.price)?-1:a.price, bv=isNaN(b.price)?-1:b.price; return (av-bv)*dir; }
+    case 'mcap':   { const av=isNaN(a.mcap)?-1:a.mcap, bv=isNaN(b.mcap)?-1:b.mcap; return (av-bv)*dir; }
+    case 'chg':    {
+      const av=isNaN(parseFloat(a.chg))?-9999:parseFloat(a.chg);
+      const bv=isNaN(parseFloat(b.chg))?-9999:parseFloat(b.chg);
+      return (av-bv)*dir;
+    }
+    case 'signal': {
+      const o={'Strong buy':4,'Buy':3,'Neutral':2,'Sell':1,'Strong sell':0};
+      return ((o[a.signal]??-1)-(o[b.signal]??-1))*dir;
+    }
+    default: return 0;
+  }
 }
 
 // ─── Modal secret key ─────────────────────────────────────────────────────────
-let _sessionSecret = ''; // tersimpan selama sesi, tidak perlu input ulang
-
 function toggleUpload() {
   if (_sessionSecret) {
-    // Sudah terautentikasi sesi ini — langsung buka/tutup panel
     document.getElementById('upload-panel').classList.toggle('open');
   } else {
-    // Belum auth — tampilkan modal
     document.getElementById('modal-key').value = '';
     document.getElementById('modal-err').classList.remove('show');
     document.getElementById('secret-modal').classList.add('open');
     setTimeout(()=>document.getElementById('modal-key').focus(), 100);
   }
 }
-
 async function confirmSecret() {
   const key = document.getElementById('modal-key').value.trim();
   if (!key) return;
-
-  // Validasi secret key dengan coba ping /api/process tanpa action
-  // Cara paling simpel: simpan saja dan biarkan server yang validasi saat upload/proses
-  // Tapi kita bisa validasi dulu dengan request kecil ke /api/upload dengan body kosong
   try {
     const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-upload-secret':key},
-      body: JSON.stringify({source:'tv', rows:[]}), // rows kosong → 400, bukan 401
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-upload-secret':key},
+      body: JSON.stringify({source:'tv', rows:[]}),
     });
-    if (res.status === 401) {
+    if (res.status===401) {
       document.getElementById('modal-err').classList.add('show');
       document.getElementById('modal-key').focus();
       return;
     }
-    // 400 = rows kosong tapi key benar → OK
     _sessionSecret = key;
     closeModal();
     document.getElementById('upload-panel').classList.add('open');
@@ -641,20 +824,14 @@ async function confirmSecret() {
     document.getElementById('modal-err').classList.add('show');
   }
 }
+function closeModal() { document.getElementById('secret-modal').classList.remove('open'); }
+function modalClickOutside(e) { if (e.target===document.getElementById('secret-modal')) closeModal(); }
 
-function closeModal() {
-  document.getElementById('secret-modal').classList.remove('open');
-}
-
-function modalClickOutside(e) {
-  if (e.target === document.getElementById('secret-modal')) closeModal();
-}
-
+// ─── Upload helpers ───────────────────────────────────────────────────────────
 function checkUploadReady() {
   document.getElementById('upload-btn').disabled = !(uploadDone.tv||uploadDone.mu||uploadDone.xt);
 }
 
-// ─── Parse helpers ────────────────────────────────────────────────────────────
 function pNum(v) {
   if (v===null||v===undefined||v==='') return 0;
   if (typeof v==='number') return v;
@@ -670,13 +847,13 @@ function extractChg(posRaw, negRaw) {
   if (raw===null) return null;
   if (typeof raw==='number') {
     const n = raw!==0&&raw>=-1&&raw<=1 ? parseFloat((raw*100).toFixed(4)) : raw;
-    return isNeg ? -Math.abs(n) : n;
+    return isNeg?-Math.abs(n):n;
   }
   const s = String(raw).replace(/\u202f|\u00a0/g,'').replace(/â€¯/g,'').replace(/\u2212|\u2013|\u2014/g,'-');
   const m = s.match(/([+\-]?\d+\.?\d*)/);
   if (!m) return null;
   let n = parseFloat(m[1]);
-  if (isNeg) n = -Math.abs(n);
+  if (isNeg) n=-Math.abs(n);
   return isNaN(n)?null:n;
 }
 function normTicker(v, isXTB) {
@@ -702,7 +879,6 @@ function tvUrlToSuperchart(url) {
   return `https://www.tradingview.com/chart/?symbol=${m[1]}%3A${m[2]}`;
 }
 
-// ─── Load file ────────────────────────────────────────────────────────────────
 function loadFile(src, inp) {
   const f = inp.files[0]; if (!f) return;
   const rd = new FileReader();
@@ -724,7 +900,6 @@ function loadFile(src, inp) {
   rd.readAsBinaryString(f);
 }
 
-// ─── Parse rows per source → normalized objects ───────────────────────────────
 function parseTVRows(rows) {
   if (!rows.length) return [];
   const cols = Object.keys(rows[0]);
@@ -749,7 +924,6 @@ function parseTVRows(rows) {
     tvUrl:  tvUrlToSuperchart(r[C.url]),
   })).filter(r=>r.ticker);
 }
-
 function parseMURows(rows) {
   if (!rows.length) return [];
   const cols = Object.keys(rows[0]);
@@ -768,7 +942,6 @@ function parseMURows(rows) {
     sector: String(r[C.sector]||''),
   })).filter(r=>r.ticker && RSCORE[r.rating]!==undefined);
 }
-
 function parseXTRows(rows) {
   if (!rows.length) return [];
   const cols = Object.keys(rows[0]);
@@ -782,67 +955,45 @@ function parseXTRows(rows) {
   })).filter(r=>r.ticker);
 }
 
-// ─── Upload raw per source ────────────────────────────────────────────────────
+// ─── Upload raw ───────────────────────────────────────────────────────────────
 async function uploadRaw() {
   const secret = _sessionSecret;
   if (!secret) { toggleUpload(); return; }
-
-  const btn   = document.getElementById('upload-btn');
-  const label = document.getElementById('upload-label');
-  btn.disabled = true;
-
+  const btn=document.getElementById('upload-btn'), label=document.getElementById('upload-label');
+  btn.disabled=true;
   const sources = ['tv','mu','xt'].filter(s=>uploadDone[s]);
-
   for (const src of sources) {
     label.textContent = `Menyimpan ${src.toUpperCase()}...`;
     try {
-      let rows;
-      if (src==='tv')      rows = parseTVRows(UPLOAD_DATA.tv);
-      else if (src==='mu') rows = parseMURows(UPLOAD_DATA.mu);
-      else                 rows = parseXTRows(UPLOAD_DATA.xt);
-
-      if (!rows.length) { alert(`Tidak ada data valid di file ${src.toUpperCase()}.`); continue; }
-
+      const rows = src==='tv'?parseTVRows(UPLOAD_DATA.tv):src==='mu'?parseMURows(UPLOAD_DATA.mu):parseXTRows(UPLOAD_DATA.xt);
+      if (!rows.length) { alert(`Tidak ada data valid di ${src.toUpperCase()}.`); continue; }
       const res  = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','x-upload-secret':secret},
+        method:'POST', headers:{'Content-Type':'application/json','x-upload-secret':secret},
         body: JSON.stringify({source:src, rows}),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error||'Upload gagal');
-
       document.getElementById('info-'+src).textContent = rows.length+' tersimpan ✓';
-    } catch(err) {
-      alert(`Gagal upload ${src.toUpperCase()}: ${err.message}`);
-    }
+    } catch(err) { alert(`Gagal upload ${src.toUpperCase()}: ${err.message}`); }
   }
-
-  label.textContent = 'Simpan Raw';
-  btn.disabled = false;
-  showStatus('ok', 'Raw data tersimpan. Klik Proses untuk merge dan tampilkan hasil.');
+  label.textContent='Simpan Raw'; btn.disabled=false;
+  showStatus('ok','Raw data tersimpan. Klik Proses untuk merge.');
 }
 
-// ─── Proses: trigger server-side merge ───────────────────────────────────────
+// ─── Process ──────────────────────────────────────────────────────────────────
 async function processData() {
   const secret = _sessionSecret;
   if (!secret) { toggleUpload(); return; }
-
-  const btn   = document.getElementById('process-btn');
-  const label = document.getElementById('process-label');
-  btn.disabled = true;
-  label.textContent = 'Memproses...';
-  showStatus('loading','Menggabungkan data dari ketiga sumber...');
-
+  const btn=document.getElementById('process-btn'), label=document.getElementById('process-label');
+  btn.disabled=true; label.textContent='Memproses...';
+  showStatus('loading','Menggabungkan data...');
   try {
     const res  = await fetch('/api/process', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-upload-secret':secret},
+      method:'POST', headers:{'Content-Type':'application/json','x-upload-secret':secret},
       body: JSON.stringify({}),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error||'Proses gagal');
-
-    // Reload data hasil merge
     const dataRes  = await fetch('/api/data');
     const dataJson = await dataRes.json();
     allStocks  = dataJson.stocks  || [];
@@ -850,126 +1001,12 @@ async function processData() {
     _dbMusaffa = dataJson.musaffa || [];
     _dbXTB     = dataJson.xtb     || [];
     _dbStats   = {statTV:dataJson.statTV||0, statHalal:dataJson.statHalal||0, statXTB:dataJson.statXTB||0};
-
-    showStatus('ok',`${json.count} saham berhasil diproses · TV:${json.statTV} · Halal:${json.statHalal} · XTB:${json.statXTB}`);
-    buildSectorOptions();
-    buildStats();
-    switchTab('result');
-    document.getElementById('tab-content').style.display = 'block';
+    showStatus('ok',`${json.count} saham · TV:${json.statTV} · Halal:${json.statHalal} · XTB:${json.statXTB}`);
+    buildSectorOptions(); buildStats(); switchTab('result');
+    document.getElementById('tab-content').style.display='block';
     document.getElementById('upload-panel').classList.remove('open');
-
-  } catch(err) {
-    showStatus('error','Proses gagal: '+err.message);
-    alert('Error: '+err.message);
-  } finally {
-    btn.disabled = false;
-    label.textContent = 'Proses';
-  }
-}
-
-// ─── Tab switcher ─────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  _activeTab = tab;
-  document.getElementById('tab-srch').value = '';
-
-  // Update active card
-  ['tv','mu','xt','result'].forEach(t => {
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
-  });
-
-  // Filter bar dan export hanya di tab result
-  document.getElementById('filter-bar').style.display    = tab==='result' ? '' : 'none';
-  document.getElementById('sec-filter').style.display    = tab==='result' ? '' : 'none';
-  document.getElementById('export-btn').style.display    = tab==='result' ? '' : 'none';
-
-  // Search placeholder
-  const placeholders = {
-    tv: 'Cari ticker / nama...', mu: 'Cari ticker / nama / sektor...',
-    xt: 'Cari ticker / nama...', result: 'Cari ticker / nama...'
-  };
-  document.getElementById('tab-srch').placeholder = placeholders[tab];
-
-  renderActiveTab();
-}
-
-function debounceTabSearch() {
-  clearTimeout(_tabTimer);
-  _tabTimer = setTimeout(()=>renderActiveTab(), 250);
-}
-
-function renderActiveTab() {
-  if (_activeTab === 'result') renderTable();
-  else renderTabList(_activeTab);
-}
-
-function renderTabList(type) {
-  const q   = document.getElementById('tab-srch').value.toLowerCase().trim();
-  const wrap = document.getElementById('tab-result-wrap');
-  const extLink = (href, content) => href
-    ? `<a href="${href}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dashed var(--bdr2)">${content}</a>`
-    : content;
-
-  let data, thead, tbody, foot;
-
-  if (type === 'tv') {
-    data = _dbTV.filter(r => !q ||
-      r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q));
-    thead = `<tr><th>Ticker</th><th>Nama</th><th>Price</th><th>Chg %</th><th>Market Cap</th><th>Signal</th></tr>`;
-    tbody = data.map(r => {
-      const chgN   = parseFloat(r.chg);
-      const chgStr = isNaN(chgN) ? '—'
-        : `<span style="${chgN>0?'color:var(--green)':chgN<0?'color:var(--red)':'color:var(--ink2)'}">${chgN>0?'+':''}${chgN.toFixed(2)}%</span>`;
-      const sc = (r.signal||'').toLowerCase();
-      const sigCls = sc==='strong buy'?'sig sig-sbuy':sc==='buy'?'sig sig-buy':'sig sig-other';
-      return `<tr>
-        <td><span class="tkr">${extLink(r.tvUrl, r.ticker)}</span></td>
-        <td><span class="co-name">${r.name||'—'}</span></td>
-        <td>${r.price?'$'+Number(r.price).toFixed(2):'—'}</td>
-        <td>${chgStr}</td>
-        <td><span class="mcap-val">${fmtMcap(r.mcap)}</span></td>
-        <td><span class="${sigCls}">${r.signal||'—'}</span></td>
-      </tr>`;
-    }).join('');
-    foot = `${data.length} dari ${_dbTV.length} saham TradingView`;
-
-  } else if (type === 'mu') {
-    data = _dbMusaffa.filter(r => !q ||
-      r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q) || (r.sector||'').toLowerCase().includes(q));
-    thead = `<tr><th>Ticker</th><th>Nama</th><th>Rating</th><th>Sektor</th></tr>`;
-    tbody = data.map(r => {
-      const score = RSCORE[r.rating]||0;
-      return `<tr>
-        <td><span class="tkr">${extLink(r.muUrl, r.ticker)}</span></td>
-        <td><span class="co-name">${r.name||'—'}</span></td>
-        <td>${extLink(r.muUrl, `<span class="rbadge ${RCLS[score]||''}">${r.rating}</span>`)}</td>
-        <td><span class="sect-pill">${r.sector||'—'}</span></td>
-      </tr>`;
-    }).join('');
-    foot = `${data.length} dari ${_dbMusaffa.length} saham halal Musaffa`;
-
-  } else {
-    data = _dbXTB.filter(r => !q ||
-      r.ticker.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q));
-    thead = `<tr><th>Ticker</th><th>Nama</th></tr>`;
-    tbody = data.map(r => `<tr>
-      <td><span class="tkr">${r.ticker}</span></td>
-      <td><span class="co-name">${r.name||'—'}</span></td>
-    </tr>`).join('');
-    foot = `${data.length} dari ${_dbXTB.length} saham XTB`;
-  }
-
-  if (!data.length) {
-    wrap.innerHTML = '<div class="empty"><i class="ti ti-mood-empty"></i><p>Tidak ada hasil.</p></div>';
-    return;
-  }
-
-  wrap.innerHTML = `
-    <div class="tbl-outer"><div class="tbl-wrap"><table>
-      <thead>${thead}</thead>
-      <tbody>${tbody}</tbody>
-    </table></div>
-    <div class="foot">${foot} · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
-    </div>`;
+  } catch(err) { showStatus('error','Proses gagal: '+err.message); alert('Error: '+err.message); }
+  finally { btn.disabled=false; label.textContent='Proses'; }
 }
 
 // ─── Export CSV ───────────────────────────────────────────────────────────────
@@ -979,18 +1016,17 @@ function exportCSV() {
   const rows = results.map(r=>[
     r.ticker, r.name, r.rating, r.score,
     r.price?Number(r.price).toFixed(2):'',
-    r.chg!==null&&r.chg!==undefined?Number(r.chg).toFixed(2)+'%':'',
+    r.chg!=null?Number(r.chg).toFixed(2)+'%':'',
     r.mcap?Number(r.mcap).toFixed(0):'',
     r.signal, r.sector, r.tvUrl||'', r.muUrl||''
   ]);
   const csv = [hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a   = document.createElement('a');
-  a.href    = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download = 'halal_screen_'+new Date().toISOString().slice(0,10)+'.csv';
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='halal_screen_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
 }
 
-// ─── Start ────────────────────────────────────────────────────────────────────
 init();
 </script>
 </body>
