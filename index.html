@@ -140,26 +140,29 @@ body { min-height:100vh; }
 .btn-process { background:var(--green); color:#fff; }
 .btn-process:hover:not(:disabled) { opacity:0.88; }
 
-/* ── Stats / Tab cards ───────────────────────────────────────────────────── */
-.stats-grid {
-  display:grid; grid-template-columns:repeat(4,1fr);
-  gap:1px; background:var(--bdr); border:1px solid var(--bdr);
-  border-radius:var(--r-lg); overflow:hidden; margin-bottom:1px;
+/* ── Tab menu bar (TV style) ─────────────────────────────────────────────── */
+.tab-menu {
+  display:flex; align-items:center; gap:2px;
+  border-bottom:1px solid var(--bdr); margin-bottom:0;
+  overflow-x:auto; scrollbar-width:none;
 }
-.scard {
-  background:var(--surf); padding:14px 16px;
-  cursor:pointer; transition:background 0.12s; position:relative;
+.tab-menu::-webkit-scrollbar { display:none; }
+.tab-menu-btn {
+  display:flex; align-items:center; gap:6px;
+  height:36px; padding:0 12px; font-size:13px; font-weight:500;
+  border:none; background:transparent; color:var(--ink2);
+  cursor:pointer; white-space:nowrap; position:relative;
+  transition:color 0.12s; border-bottom:2px solid transparent;
+  margin-bottom:-1px;
 }
-.scard:hover { background:var(--surf2); }
-.scard.active { background:var(--surf2); }
-.scard.active::after {
-  content:''; position:absolute; bottom:0; left:0; right:0;
-  height:2px; background:var(--green);
+.tab-menu-btn:hover { color:var(--ink); background:var(--surf2); border-radius:var(--r-sm) var(--r-sm) 0 0; }
+.tab-menu-btn.active { color:var(--ink); border-bottom-color:var(--green); }
+.tab-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.tab-count {
+  font-size:11px; font-weight:600; color:var(--ink3);
+  background:var(--surf2); padding:1px 6px; border-radius:10px; min-width:20px; text-align:center;
 }
-.scard-val { font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--ink); line-height:1.1; }
-.scard.active .scard-val { color:var(--green); }
-.scard-label { font-size:11px; color:var(--ink2); margin-top:4px; display:flex; align-items:center; gap:4px; }
-.scard-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.tab-menu-btn.active .tab-count { color:var(--green); background:var(--green-bg); }
 
 /* ── Tab toolbar ─────────────────────────────────────────────────────────── */
 .tab-toolbar {
@@ -225,7 +228,8 @@ tr:last-child td { border-bottom:none; }
 tr:hover td { background:var(--surf2); }
 .tkr {
   display:inline-block; font-weight:700; font-size:13px;
-  background:var(--surf2); padding:3px 8px; border-radius:4px; letter-spacing:0.2px;
+  background:var(--surf2); padding:3px 8px; border-radius:4px;
+  letter-spacing:0.2px; min-width:52px; text-align:center;
 }
 .co-name {
   font-size:14px; max-width:180px; overflow:hidden; text-overflow:ellipsis; display:block;
@@ -251,7 +255,7 @@ tr:hover td { background:var(--surf2); }
 
 /* Signal badges — icon style, no background pill */
 .sig {
-  font-size:13px; font-weight:600; white-space:nowrap;
+  font-weight:600; white-space:nowrap;
   display:inline-flex; align-items:center; gap:6px;
   background:transparent; padding:0; border-radius:0;
 }
@@ -260,7 +264,7 @@ tr:hover td { background:var(--surf2); }
 .sig-sell, .sig-ssell { color:var(--red); }
 .sig-neu, .sig-norating { color:var(--ink2); }
 
-.sect-pill { font-size:11px; color:var(--ink2); }
+.sect-pill { }
 .chg-up   { color:var(--green); font-variant-numeric:tabular-nums; }
 .chg-dn   { color:var(--red);   font-variant-numeric:tabular-nums; }
 .chg-flat { color:var(--ink2);  font-variant-numeric:tabular-nums; }
@@ -427,24 +431,37 @@ tr:hover td { background:var(--surf2); }
     </div>
   </div>
 
-  <!-- Stats / Tab cards -->
-  <div class="stats-grid" id="stats-grid" style="display:none">
-    <div class="scard" id="tab-tv" onclick="switchTab('tv')">
-      <div class="scard-val" id="st-tv">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#2962ff"></span>TradingView</div>
-    </div>
-    <div class="scard" id="tab-mu" onclick="switchTab('mu')">
-      <div class="scard-val" id="st-halal">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#7B1FA2"></span>Halal di Musaffa</div>
-    </div>
-    <div class="scard" id="tab-xt" onclick="switchTab('xt')">
-      <div class="scard-val" id="st-xtb">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#F57C00"></span>Tersedia di XTB</div>
-    </div>
-    <div class="scard active" id="tab-result" onclick="switchTab('result')">
-      <div class="scard-val" id="st-final">0</div>
-      <div class="scard-label"><span class="scard-dot" style="background:#26a69a"></span>Lolos Filter</div>
-    </div>
+  <!-- Tab menu bar (TV style) -->
+  <div class="tab-menu" id="tab-menu" style="display:none">
+    <button class="tab-menu-btn" id="tab-tv" onclick="switchTab('tv')">
+      <span class="tab-dot" style="background:#2962ff"></span>
+      TradingView
+      <span class="tab-count" id="st-tv">0</span>
+    </button>
+    <button class="tab-menu-btn" id="tab-mu" onclick="switchTab('mu')">
+      <span class="tab-dot" style="background:#7B1FA2"></span>
+      Musaffa
+      <span class="tab-count" id="st-halal">0</span>
+    </button>
+    <button class="tab-menu-btn" id="tab-xt" onclick="switchTab('xt')">
+      <span class="tab-dot" style="background:#F57C00"></span>
+      XTB
+      <span class="tab-count" id="st-xtb">0</span>
+    </button>
+    <button class="tab-menu-btn" id="tab-xthalal" onclick="switchTab('xthalal')">
+      <span class="tab-dot" style="background:#22ab94"></span>
+      XTB Halal
+      <span class="tab-count" id="st-xthalal">0</span>
+    </button>
+    <button class="tab-menu-btn active" id="tab-result" onclick="switchTab('result')">
+      <span class="tab-dot" style="background:#22ab94"></span>
+      Lolos Filter
+      <span class="tab-count" id="st-final">0</span>
+    </button>
+    <button class="tab-menu-btn" id="tab-watchlist" onclick="switchTab('watchlist')">
+      <i class="ti ti-star" style="font-size:12px"></i>
+      Watchlist
+    </button>
   </div>
 
   <!-- Tab content -->
@@ -489,16 +506,18 @@ let allStocks = [], results = [];
 let uploadDone = {tv:false, mu:false, xt:false};
 let UPLOAD_DATA = {tv:[], mu:[], xt:[]};
 let _dbStats = {statTV:0, statHalal:0, statXTB:0};
-let _dbTV = [], _dbMusaffa = [], _dbXTB = [];
+let _dbTV = [], _dbMusaffa = [], _dbXTB = [], _dbXTHalal = [];
 let _activeTab = 'result';
 let _tabTimer = null, _sessionSecret = '';
 
 // Sort state per tab
 const _sort = {
-  tv:     {col:'ticker', dir:1},
-  mu:     {col:'rating', dir:-1},
-  xt:     {col:'ticker', dir:1},
-  result: {col:'score',  dir:-1},
+  tv:      {col:'ticker', dir:1},
+  mu:      {col:'rating', dir:-1},
+  xt:      {col:'ticker', dir:1},
+  xthalal: {col:'rating', dir:-1},
+  result:  {col:'score',  dir:-1},
+  watchlist:{col:'ticker',dir:1},
 };
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
@@ -525,6 +544,9 @@ async function init() {
     _dbMusaffa = json.musaffa || [];
     _dbXTB     = json.xtb     || [];
     _dbStats   = {statTV:json.statTV||0, statHalal:json.statHalal||0, statXTB:json.statXTB||0};
+    // XTB Halal = irisan XTB ∩ Musaffa
+    const xtSet = new Set(_dbXTB.map(r=>r.ticker));
+    _dbXTHalal = _dbMusaffa.filter(r=>xtSet.has(r.ticker));
 
     const updatedAt = json.updatedAt
       ? new Date(json.updatedAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
@@ -539,6 +561,7 @@ async function init() {
       buildSectorOptions();
       buildStats();
       switchTab('result');
+      document.getElementById('tab-menu').style.display = 'flex';
       document.getElementById('tab-content').style.display = 'block';
     }
   } catch(err) {
@@ -565,11 +588,12 @@ function buildSectorOptions() {
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function buildStats() {
   const minScore = parseInt(document.getElementById('f-rating').value)||1;
-  document.getElementById('st-tv').textContent    = _dbStats.statTV;
-  document.getElementById('st-halal').textContent = _dbStats.statHalal;
-  document.getElementById('st-xtb').textContent   = _dbStats.statXTB;
-  document.getElementById('st-final').textContent = allStocks.filter(r=>r.score>=minScore).length;
-  document.getElementById('stats-grid').style.display = 'grid';
+  document.getElementById('st-tv').textContent      = _dbStats.statTV;
+  document.getElementById('st-halal').textContent   = _dbStats.statHalal;
+  document.getElementById('st-xtb').textContent     = _dbStats.statXTB;
+  document.getElementById('st-xthalal').textContent = _dbXTHalal.length;
+  document.getElementById('st-final').textContent   = allStocks.filter(r=>r.score>=minScore).length;
+  document.getElementById('tab-menu').style.display = 'flex';
 }
 
 // ─── Format helpers ───────────────────────────────────────────────────────────
@@ -600,9 +624,8 @@ function fmtSig(s) {
   return `<span class="sig ${cls}"><i class="ti ${icon}"></i>${s||'No rating'}</span>`;
 }
 function extLink(href, content) {
-  return href
-    ? `<a href="${href}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${content}</a>`
-    : content;
+  if (!href) return content;
+  return `<a href="${href}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${content}</a>`;
 }
 
 // ─── Tab switcher ─────────────────────────────────────────────────────────────
@@ -610,16 +633,22 @@ function switchTab(tab) {
   _activeTab = tab;
   document.getElementById('tab-srch').value = '';
 
-  ['tv','mu','xt','result'].forEach(t =>
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab));
+  ['tv','mu','xt','xthalal','result','watchlist'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.classList.toggle('active', t===tab);
+  });
 
-  document.getElementById('filter-bar').style.display  = tab==='result' ? 'flex' : 'none';
-  document.getElementById('sec-filter').style.display  = tab==='result' ? ''     : 'none';
-  document.getElementById('export-btn').style.display  = tab==='result' ? 'flex' : 'none';
+  const isResult = tab==='result';
+  document.getElementById('filter-bar').style.display  = isResult ? 'flex' : 'none';
+  document.getElementById('sec-filter').style.display  = isResult ? ''     : 'none';
+  document.getElementById('export-btn').style.display  = isResult ? 'flex' : 'none';
 
-  const ph = {tv:'Cari ticker / nama...', mu:'Cari ticker, nama, sektor...', xt:'Cari ticker / nama...', result:'Cari ticker / nama...'};
-  document.getElementById('tab-srch').placeholder = ph[tab];
-
+  const ph = {
+    tv:'Cari ticker / nama...', mu:'Cari ticker, nama, sektor...',
+    xt:'Cari ticker / nama...', xthalal:'Cari ticker, nama, sektor...',
+    result:'Cari ticker / nama...', watchlist:'Cari watchlist...'
+  };
+  document.getElementById('tab-srch').placeholder = ph[tab]||'Cari...';
   renderActiveTab();
 }
 
@@ -630,6 +659,7 @@ function debounceTabSearch() {
 
 function renderActiveTab() {
   if (_activeTab==='result') renderResult();
+  else if (_activeTab==='watchlist') renderWatchlist();
   else renderTabList(_activeTab);
 }
 
@@ -682,7 +712,7 @@ function renderResult() {
       ${thSort('result','sector','Sektor')}
     </tr></thead>
     <tbody>${rows.map(r=>`<tr>
-      <td><span class="tkr">${extLink(r.tvUrl,r.ticker)}</span></td>
+      <td>${extLink(r.tvUrl,`<span class="tkr">${r.ticker}</span>`)}</td>
       <td><span class="co-name">${extLink(r.tvUrl,r.name||'—')}</span></td>
       <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[r.score]||''}">${r.rating}</span>`)}</td>
       <td class="num">${fmtP(r.price)}</td>
@@ -737,13 +767,33 @@ function renderTabList(type) {
     tbodyFn = r=>{
       const score = RSCORE[r.rating]||0;
       return `<tr>
-        <td><span class="tkr">${extLink(r.muUrl,r.ticker)}</span></td>
+        <td>${extLink(r.muUrl,`<span class="tkr">${r.ticker}</span>`)}</td>
         <td><span class="co-name">${r.name||'—'}</span></td>
         <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[score]||''}">${r.rating}</span>`)}</td>
         <td><span class="sect-pill">${r.sector||'—'}</span></td>
       </tr>`;
     };
     foot = `${data.length} dari ${_dbMusaffa.length} saham halal Musaffa`;
+
+  } else if (type==='xthalal') {
+    data = _dbXTHalal.filter(r=>!q||r.ticker.toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q)||(r.sector||'').toLowerCase().includes(q));
+    data.sort((a,b)=>sortFn(a,b,s.col,s.dir,'xthalal'));
+    thead = `<tr>
+      ${thSort('xthalal','ticker','Ticker')}
+      ${thSort('xthalal','name','Nama')}
+      ${thSort('xthalal','rating','Rating')}
+      ${thSort('xthalal','sector','Sektor')}
+    </tr>`;
+    tbodyFn = r=>{
+      const score = RSCORE[r.rating]||0;
+      return `<tr>
+        <td><a href="${r.muUrl||''}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><span class="tkr">${r.ticker}</span></a></td>
+        <td><span class="co-name">${r.name||'—'}</span></td>
+        <td><a href="${r.muUrl||''}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><span class="rbadge ${RCLS[score]||''}">${r.rating}</span></a></td>
+        <td><span class="sect-pill">${r.sector||'—'}</span></td>
+      </tr>`;
+    };
+    foot = `${data.length} dari ${_dbXTHalal.length} saham halal di XTB`;
 
   } else {
     data = _dbXTB.filter(r=>!q||r.ticker.toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q));
@@ -767,6 +817,15 @@ function renderTabList(type) {
   </table></div>
   <div class="foot">${foot} · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
   </div>`;
+}
+
+// ─── Watchlist (placeholder) ──────────────────────────────────────────────────
+function renderWatchlist() {
+  document.getElementById('tab-result-wrap').innerHTML = `
+    <div class="empty">
+      <i class="ti ti-star"></i>
+      <p>Watchlist belum tersedia.<br>Fitur ini akan segera hadir.</p>
+    </div>`;
 }
 
 // ─── Sort function ────────────────────────────────────────────────────────────
@@ -1005,8 +1064,11 @@ async function processData() {
     _dbMusaffa = dataJson.musaffa || [];
     _dbXTB     = dataJson.xtb     || [];
     _dbStats   = {statTV:dataJson.statTV||0, statHalal:dataJson.statHalal||0, statXTB:dataJson.statXTB||0};
+    const xtSet2 = new Set(_dbXTB.map(r=>r.ticker));
+    _dbXTHalal = _dbMusaffa.filter(r=>xtSet2.has(r.ticker));
     showStatus('ok',`${json.count} saham · TV:${json.statTV} · Halal:${json.statHalal} · XTB:${json.statXTB}`);
     buildSectorOptions(); buildStats(); switchTab('result');
+    document.getElementById('tab-menu').style.display='flex';
     document.getElementById('tab-content').style.display='block';
     document.getElementById('upload-panel').classList.remove('open');
   } catch(err) { showStatus('error','Proses gagal: '+err.message); alert('Error: '+err.message); }
