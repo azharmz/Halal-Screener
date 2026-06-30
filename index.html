@@ -11,27 +11,26 @@
 
 /* ── Tokens ─────────────────────────────────────────────────────────────── */
 :root {
-  --bg:       #131722;
-  --surf:     #1e222d;
-  --surf2:    #2a2e39;
-  --surf3:    #363a45;
-  --ink:      #d1d4dc;
-  --ink2:     #787b86;
+  --bg:       #000000;
+  --surf:     #0f0f0f;
+  --surf2:    #2e2e2e;
+  --surf3:    #2e2e2e;
+  --ink:      #dbdbdb;
+  --ink2:     #8c8c8c;
   --ink3:     #4e5263;
-  --bdr:      rgba(255,255,255,0.06);
-  --bdr2:     rgba(255,255,255,0.12);
-  --green:    #26a69a;
-  --green-bg: rgba(38,166,154,0.12);
-  --green-dk: #1a7a70;
-  --red:      #ef5350;
-  --red-bg:   rgba(239,83,80,0.12);
+  --bdr:      #2e2e2e;
+  --bdr2:     rgba(255,255,255,0.16);
+  --green:    #22ab94;
+  --green-bg: rgba(34,171,148,0.15);
+  --green-dk: #056656;
+  --red:      #f7525f;
+  --red-bg:   rgba(247,82,95,0.15);
   --blue:     #2962ff;
   --r-sm:5px; --r-md:8px; --r-lg:12px;
   font-family:-apple-system,BlinkMacSystemFont,'Trebuchet MS',Roboto,Ubuntu,sans-serif;
-  font-size:14px; color:var(--ink); background:var(--bg);
+  font-size:14px; color:#ffffff; background:var(--bg);
   -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  font-feature-settings:"tnum" on,"lnum" on;
+  font-feature-settings:"tnum","lnum";
 }
 [data-theme="light"] {
   --bg:    #f0f3fa;
@@ -225,15 +224,14 @@ td {
 tr:last-child td { border-bottom:none; }
 tr:hover td { background:var(--surf2); }
 .tkr {
-  font-weight:600; font-family:'Trebuchet MS',monospace; font-size:12px;
-  color:var(--ink);
+  display:inline-block; font-weight:700; font-size:13px;
+  background:var(--surf2); padding:3px 8px; border-radius:4px; letter-spacing:0.2px;
 }
 .co-name {
-  font-size:11px; color:var(--ink2);
-  max-width:180px; overflow:hidden; text-overflow:ellipsis; display:block;
+  font-size:14px; max-width:180px; overflow:hidden; text-overflow:ellipsis; display:block;
 }
-.num { font-variant-numeric:tabular-nums; font-size:12px; }
-.mcap-val { font-size:11px; color:var(--ink2); font-variant-numeric:tabular-nums; }
+.num { font-variant-numeric:tabular-nums; font-size:14px; font-weight:600; }
+.mcap-val { font-size:14px; font-variant-numeric:tabular-nums; }
 
 /* Rating badges — TV style */
 .rbadge {
@@ -241,34 +239,31 @@ tr:hover td { background:var(--surf2); }
   font-size:10px; font-weight:700; padding:2px 7px;
   border-radius:3px; min-width:32px; letter-spacing:0.02em;
 }
-.r9{background:rgba(38,166,154,0.2);color:#26a69a}
-.r8{background:rgba(38,166,154,0.15);color:#26a69a}
+.r9{background:rgba(34,171,148,0.2);color:#22ab94}
+.r8{background:rgba(34,171,148,0.15);color:#22ab94}
 .r7{background:rgba(41,182,246,0.15);color:#29b6f6}
 .r6{background:rgba(41,182,246,0.12);color:#29b6f6}
 .r5{background:rgba(41,98,255,0.15);color:#5c8bff}
 .r4{background:rgba(41,98,255,0.12);color:#5c8bff}
 .r3{background:rgba(255,152,0,0.15);color:#ffa726}
 .r2{background:rgba(255,152,0,0.12);color:#ffa726}
-.r1{background:rgba(239,83,80,0.15);color:#ef5350}
+.r1{background:rgba(247,82,95,0.15);color:#f7525f}
 
-/* Signal badges */
+/* Signal badges — icon style, no background pill */
 .sig {
-  font-size:10px; font-weight:600; padding:2px 7px;
-  border-radius:3px; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;
+  font-size:13px; font-weight:600; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:6px;
+  background:transparent; padding:0; border-radius:0;
 }
-.sig::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
-.sig-sbuy  { background:rgba(41,98,255,0.15); color:#5c8bff; }
-.sig-sbuy::before { background:#5c8bff; }
-.sig-buy   { background:rgba(38,166,154,0.15); color:#26a69a; }
-.sig-buy::before { background:#26a69a; }
-.sig-neu   { background:rgba(120,123,134,0.15); color:#787b86; }
-.sig-neu::before { background:#787b86; }
-.sig-sell  { background:rgba(239,83,80,0.12); color:#ef5350; }
-.sig-sell::before { background:#ef5350; }
+.sig i { font-size:13px; line-height:1; }
+.sig-sbuy, .sig-buy  { color:var(--green); }
+.sig-sell, .sig-ssell { color:var(--red); }
+.sig-neu, .sig-norating { color:var(--ink2); }
 
 .sect-pill { font-size:11px; color:var(--ink2); }
 .chg-up   { color:var(--green); font-variant-numeric:tabular-nums; }
 .chg-dn   { color:var(--red);   font-variant-numeric:tabular-nums; }
+.chg-flat { color:var(--ink2);  font-variant-numeric:tabular-nums; }
 .chg-flat { color:var(--ink2);  font-variant-numeric:tabular-nums; }
 
 .empty { padding:48px; text-align:center; color:var(--ink3); }
@@ -589,14 +584,20 @@ function fmtMcap(v) {
 function fmtChg(v) {
   const n = parseFloat(v);
   if (isNaN(n)) return '<span class="chg-flat">—</span>';
-  const sign = n>0?'+':'';
+  const sign = n>0?'+':n<0?'\u2212':'';
   const cls  = n>0?'chg-up':n<0?'chg-dn':'chg-flat';
-  return `<span class="${cls}">${sign}${n.toFixed(2)}%</span>`;
+  return `<span class="${cls}">${sign}${Math.abs(n).toFixed(2)}%</span>`;
 }
 function fmtSig(s) {
   const sl = (s||'').toLowerCase();
-  const cls = sl==='strong buy'?'sig-sbuy':sl==='buy'?'sig-buy':sl==='sell'||sl==='strong sell'?'sig-sell':'sig-neu';
-  return `<span class="sig ${cls}">${s||'—'}</span>`;
+  let cls, icon;
+  if (sl==='strong buy')       { cls='sig-sbuy'; icon='ti-chevrons-up'; }
+  else if (sl==='buy')         { cls='sig-buy';  icon='ti-chevron-up'; }
+  else if (sl==='sell')        { cls='sig-sell'; icon='ti-chevron-down'; }
+  else if (sl==='strong sell') { cls='sig-ssell';icon='ti-chevrons-down'; }
+  else if (sl==='neutral')     { cls='sig-neu';  icon='ti-equal'; }
+  else                          { cls='sig-norating'; icon='ti-minus'; }
+  return `<span class="sig ${cls}"><i class="ti ${icon}"></i>${s||'No rating'}</span>`;
 }
 function extLink(href, content) {
   return href
