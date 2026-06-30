@@ -320,11 +320,77 @@ tr:hover td { background:var(--surf2); }
 }
 .modal-confirm:hover { opacity:0.88; }
 
+/* ── Watchlist ───────────────────────────────────────────────────────────── */
+.wl-paste-panel {
+  background:var(--surf); border:1px solid var(--bdr); border-top:none;
+  border-radius:0 0 var(--r-lg) var(--r-lg);
+  padding:16px; margin-bottom:14px;
+}
+.wl-textarea {
+  width:100%; min-height:160px; font-size:12px; font-family:inherit;
+  border:1px solid var(--bdr2); border-radius:var(--r-sm);
+  background:var(--surf2); color:var(--ink);
+  padding:10px; outline:none; resize:vertical; margin-top:10px;
+}
+.wl-textarea:focus { border-color:var(--green); }
+.wl-preview-list { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+.wl-preview-row {
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:8px 10px; border:1px solid var(--bdr); border-radius:var(--r-sm);
+  font-size:11px;
+}
+.wl-preview-meta { color:var(--ink2); flex:1; min-width:200px; }
+
+.wl-card-list { display:flex; flex-direction:column; gap:10px; padding:2px 0 0; }
+.wl-card {
+  background:var(--surf); border:1px solid var(--bdr); border-radius:var(--r-lg);
+  padding:14px 16px;
+}
+.wl-card-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.wl-signal-tag {
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+  background:var(--surf2); color:var(--ink2); padding:2px 8px; border-radius:10px;
+}
+.wl-ts { font-size:11px; color:var(--ink3); margin-left:auto; }
+.wl-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:10px; font-weight:600; padding:2px 8px; border-radius:10px; white-space:nowrap;
+}
+.wl-badge-ok   { background:var(--green-bg); color:var(--green); }
+.wl-badge-warn { background:rgba(255,152,0,0.15); color:#ffa726; }
+
+.wl-stats-row {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+  padding:10px 0; border-top:1px solid var(--bdr); border-bottom:1px solid var(--bdr);
+  margin-bottom:10px;
+}
+.wl-stat { display:flex; flex-direction:column; gap:2px; }
+.wl-stat-label { font-size:10px; color:var(--ink3); text-transform:uppercase; letter-spacing:0.05em; }
+.wl-stat-val { font-size:14px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+
+.wl-indic-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px 14px;
+  margin-bottom:10px;
+}
+.wl-indic { display:flex; align-items:center; gap:6px; font-size:11px; }
+.wl-indic-label { color:var(--ink2); min-width:62px; }
+.wl-indic-val { color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+.wl-dot-up      { color:var(--green); }
+.wl-dot-down    { color:var(--red); }
+.wl-dot-warn    { color:#ffa726; }
+.wl-dot-neutral { color:var(--ink3); }
+
+.wl-opinion {
+  font-size:12px; color:var(--ink2); line-height:1.6;
+  padding-top:10px; border-top:1px solid var(--bdr);
+}
+
 @media(max-width:640px){
   .upload-grid{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:repeat(2,1fr)}
   .tab-toolbar{flex-wrap:wrap}
   .panel-bottom{flex-direction:column}
+  .wl-stats-row{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -489,6 +555,23 @@ tr:hover td { background:var(--surf2); }
       <button class="tab-btn" id="export-btn" onclick="exportCSV()" style="display:none">
         <i class="ti ti-download" style="font-size:12px"></i> Export CSV
       </button>
+      <button class="tab-btn" id="wl-add-btn" onclick="toggleWlPaste()" style="display:none">
+        <i class="ti ti-clipboard-plus" style="font-size:12px"></i> Tambah Sinyal
+      </button>
+    </div>
+
+    <!-- Watchlist: paste panel -->
+    <div class="wl-paste-panel" id="wl-paste-panel" style="display:none">
+      <div class="panel-title">Tambah Sinyal dari Telegram</div>
+      <div class="panel-hint">Paste teks sinyal (bisa beberapa sekaligus), lalu klik Parse untuk pratinjau sebelum disimpan. Disimpan sebagai riwayat — tidak menimpa entry lama.</div>
+      <textarea class="wl-textarea" id="wl-paste-text" placeholder="Paste teks sinyal Telegram di sini..."></textarea>
+      <div class="panel-bottom" style="margin-top:10px">
+        <button class="act-btn btn-upload" onclick="toggleWlPaste()">Batal</button>
+        <button class="act-btn btn-process" onclick="parseWlPreview()">
+          <i class="ti ti-wand" style="font-size:13px"></i> Parse
+        </button>
+      </div>
+      <div id="wl-preview-wrap"></div>
     </div>
 
     <div id="tab-result-wrap"></div>
@@ -643,13 +726,23 @@ function switchTab(tab) {
   document.getElementById('sec-filter').style.display  = isResult ? ''     : 'none';
   document.getElementById('export-btn').style.display  = isResult ? 'flex' : 'none';
 
+  const isWatchlist = tab==='watchlist';
+  document.getElementById('wl-add-btn').style.display = isWatchlist ? 'flex' : 'none';
+  if (!isWatchlist) document.getElementById('wl-paste-panel').style.display = 'none';
+
   const ph = {
     tv:'Cari ticker / nama...', mu:'Cari ticker, nama, sektor...',
     xt:'Cari ticker / nama...', xthalal:'Cari ticker, nama, sektor...',
     result:'Cari ticker / nama...', watchlist:'Cari watchlist...'
   };
   document.getElementById('tab-srch').placeholder = ph[tab]||'Cari...';
-  renderActiveTab();
+
+  if (isWatchlist && !_wlLoaded) {
+    document.getElementById('tab-result-wrap').innerHTML = '<div class="empty"><i class="ti ti-loader-2"></i><p>Memuat watchlist...</p></div>';
+    fetchWatchlist(false);
+  } else {
+    renderActiveTab();
+  }
 }
 
 function debounceTabSearch() {
@@ -819,13 +912,234 @@ function renderTabList(type) {
   </div>`;
 }
 
-// ─── Watchlist (placeholder) ──────────────────────────────────────────────────
-function renderWatchlist() {
-  document.getElementById('tab-result-wrap').innerHTML = `
-    <div class="empty">
-      <i class="ti ti-star"></i>
-      <p>Watchlist belum tersedia.<br>Fitur ini akan segera hadir.</p>
+// ─── Watchlist: state ───────────────────────────────────────────────────────
+let _dbWatchlist = [];
+let _wlLoaded = false;
+let _wlPreviewEntries = [];
+
+// ─── Watchlist: parsing helpers ──────────────────────────────────────────────
+function rxEscape(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function wlGetLine(label, content) {
+  const re = new RegExp(rxEscape(label) + '\\s*([^\\n]*)');
+  const m = content.match(re);
+  return m ? m[1] : '';
+}
+function wlFirstNum(line) {
+  const m = String(line||'').match(/(-?[\d.,]+)/);
+  return m ? parseFloat(m[1].replace(/,/g,'')) : null;
+}
+function wlGrabNum(label, content) {
+  const re = new RegExp(rxEscape(label) + '[^:\\n]*:\\s*\\$?(-?[\\d,.]+)');
+  const m = content.match(re);
+  return m ? parseFloat(m[1].replace(/,/g,'')) : null;
+}
+function wlExtractDot(line) {
+  const s = String(line||'');
+  if (s.includes('🟢')) return 'up';
+  if (s.includes('🔴')) return 'down';
+  if (s.includes('🟡')) return 'warn';
+  if (s.includes('⚪')) return 'neutral';
+  return null;
+}
+function wlCleanText(s) { return String(s||'').replace(/[^\x00-\x7F]+/g,' ').replace(/\s+/g,' ').trim(); }
+
+function parseWatchlistText(text) {
+  const blockRe = /\[(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2})\][^\n]*\n/g;
+  const matches = [...String(text||'').matchAll(blockRe)];
+  if (!matches.length) return [];
+  const blocks = [];
+  for (let i=0; i<matches.length; i++) {
+    const headerEnd = matches[i].index + matches[i][0].length; // lewati baris header (mengandung kata "Signal:" juga)
+    const end = i+1<matches.length ? matches[i+1].index : text.length;
+    blocks.push({ ts: matches[i][1], content: text.slice(headerEnd, end) });
+  }
+  return blocks.map(b=>parseWatchlistBlock(b.ts, b.content)).filter(Boolean);
+}
+
+function parseWatchlistBlock(ts, content) {
+  const tickerM = content.match(/Symbol:\s*([A-Z0-9.]+)/i);
+  if (!tickerM) return null;
+  const ticker = tickerM[1].toUpperCase();
+
+  const signalType = wlCleanText(wlGetLine('Signal:', content)) || 'WATCHLIST';
+  const entry   = wlGrabNum('Entry Price', content);
+  const tp      = wlGrabNum('Take Profit', content);
+  const target2 = wlGrabNum('Target 2', content);
+  const sl      = wlGrabNum('Stop Loss', content);
+
+  const macdLine = wlGetLine('MACD:', content);
+  const macdM    = macdLine.match(/(-?[\d.]+)\s*\(Sig:\s*(-?[\d.]+)\)/);
+  const macd = macdM ? { value:parseFloat(macdM[1]), signal:parseFloat(macdM[2]), dot:wlExtractDot(macdLine) } : null;
+
+  const rsiLine = wlGetLine('RSI (14):', content);
+  const rsi = rsiLine ? { value: wlFirstNum(rsiLine), dot: wlExtractDot(rsiLine) } : null;
+
+  const emaLine = wlGetLine('EMA 20/50:', content);
+  const emaM = emaLine.match(/(-?[\d.]+)\s*\/\s*(-?[\d.]+)/);
+  const ema = emaM ? { ema20:parseFloat(emaM[1]), ema50:parseFloat(emaM[2]), dot:wlExtractDot(emaLine) } : null;
+
+  const vwapLine = wlGetLine('VWAP:', content);
+  const vwap = vwapLine ? { value: wlFirstNum(vwapLine), dot: wlExtractDot(vwapLine) } : null;
+
+  const bbLine = wlGetLine('Bollinger Bands:', content);
+  const bbM = bbLine.match(/(-?[\d.]+)\s*-\s*(-?[\d.]+)/);
+  const bb = bbM ? { low:parseFloat(bbM[1]), high:parseFloat(bbM[2]), dot:wlExtractDot(bbLine) } : null;
+
+  const adxLine = wlGetLine('ADX:', content);
+  const adx = adxLine ? { value: wlFirstNum(adxLine), dot: wlExtractDot(adxLine) } : null;
+
+  const atrLine = wlGetLine('ATR (Volatilitas):', content);
+  const atr = atrLine ? { value: wlFirstNum(atrLine), dot: wlExtractDot(atrLine) } : null;
+
+  const chartLine  = wlGetLine('Chart:', content);
+  const chart = chartLine ? { label: wlCleanText(chartLine), dot: wlExtractDot(chartLine) } : null;
+
+  const candleLine = wlGetLine('Candle:', content);
+  const candle = candleLine ? { label: wlCleanText(candleLine), dot: wlExtractDot(candleLine) } : null;
+
+  const opinionM = content.match(/Analyst Opinion:\s*\n?([\s\S]*)/i);
+  const opinion  = opinionM ? opinionM[1].trim() : '';
+
+  return { ts, ticker, signalType, entry, tp, target2, sl, macd, rsi, ema, vwap, bb, adx, atr, chart, candle, opinion };
+}
+
+// ─── Watchlist: cross-check XTB Halal ────────────────────────────────────────
+function wlCheckHalal(ticker) {
+  const hit = _dbXTHalal.find(r=>r.ticker===ticker);
+  return hit ? { ok:true, rating:hit.rating } : { ok:false };
+}
+function wlHalalBadge(ticker) {
+  const c = wlCheckHalal(ticker);
+  return c.ok
+    ? `<span class="wl-badge wl-badge-ok"><i class="ti ti-circle-check" style="font-size:11px"></i> Halal · XTB (${c.rating})</span>`
+    : `<span class="wl-badge wl-badge-warn"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Tidak ada di data Halal/XTB</span>`;
+}
+
+// ─── Watchlist: paste panel ───────────────────────────────────────────────────
+function toggleWlPaste() {
+  const panel = document.getElementById('wl-paste-panel');
+  const isOpen = panel.style.display!=='none';
+  if (isOpen) { panel.style.display='none'; return; }
+  if (!_sessionSecret) { toggleUpload(); return; }
+  panel.style.display = 'block';
+  document.getElementById('wl-preview-wrap').innerHTML = '';
+  document.getElementById('wl-paste-text').value = '';
+}
+
+function parseWlPreview() {
+  const text = document.getElementById('wl-paste-text').value;
+  _wlPreviewEntries = parseWatchlistText(text);
+  const wrap = document.getElementById('wl-preview-wrap');
+  if (!_wlPreviewEntries.length) {
+    wrap.innerHTML = '<div class="empty" style="padding:24px"><p>Tidak ada sinyal terdeteksi. Cek formatnya.</p></div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="panel-hint" style="margin:12px 0 8px">${_wlPreviewEntries.length} sinyal terdeteksi — cek dulu sebelum disimpan:</div>
+    <div class="wl-preview-list">
+      ${_wlPreviewEntries.map(e=>`
+        <div class="wl-preview-row">
+          <span class="tkr">${e.ticker}</span>
+          <span class="wl-preview-meta">${e.signalType} · Entry ${e.entry??'—'} · TP ${e.tp??'—'} · SL ${e.sl??'—'} · ${e.ts}</span>
+          ${wlHalalBadge(e.ticker)}
+        </div>
+      `).join('')}
+    </div>
+    <div class="panel-bottom" style="margin-top:12px">
+      <button class="act-btn btn-process" onclick="saveWlEntries()">
+        <i class="ti ti-device-floppy" style="font-size:13px"></i> Simpan ${_wlPreviewEntries.length} ke Watchlist
+      </button>
     </div>`;
+}
+
+async function saveWlEntries() {
+  if (!_wlPreviewEntries.length) return;
+  if (!_sessionSecret) { toggleUpload(); return; }
+  try {
+    const res = await fetch('/api/watchlist', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-upload-secret':_sessionSecret},
+      body: JSON.stringify({ entries: _wlPreviewEntries }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error||'Gagal simpan');
+    _wlPreviewEntries = [];
+    document.getElementById('wl-paste-panel').style.display='none';
+    await fetchWatchlist(true);
+    showStatus('ok', `${json.added} sinyal tersimpan ke watchlist.`);
+  } catch(err) { alert('Gagal simpan watchlist: '+err.message); }
+}
+
+// ─── Watchlist: fetch & render ────────────────────────────────────────────────
+async function fetchWatchlist(force) {
+  if (_wlLoaded && !force) return;
+  try {
+    const res  = await fetch('/api/watchlist');
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error||'Fetch gagal');
+    _dbWatchlist = json.entries || [];
+    _wlLoaded = true;
+  } catch(err) {
+    document.getElementById('tab-result-wrap').innerHTML = `<div class="empty"><i class="ti ti-wifi-off"></i><p>Gagal memuat watchlist: ${err.message}</p></div>`;
+    return;
+  }
+  renderWatchlist();
+}
+
+function renderWatchlist() {
+  const q    = document.getElementById('tab-srch').value.toLowerCase().trim();
+  const wrap = document.getElementById('tab-result-wrap');
+
+  let data = _dbWatchlist.filter(e=>!q||e.ticker.toLowerCase().includes(q));
+  data = data.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
+
+  if (!data.length) {
+    wrap.innerHTML = `<div class="empty"><i class="ti ti-star"></i><p>${_dbWatchlist.length?'Tidak ada hasil.':'Belum ada sinyal tersimpan.<br>Klik "Tambah Sinyal" untuk paste dari Telegram.'}</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="wl-card-list">${data.map(wlCard).join('')}</div>`;
+}
+
+function wlDotIcon(dot) {
+  const map = { up:'wl-dot-up', down:'wl-dot-down', warn:'wl-dot-warn', neutral:'wl-dot-neutral' };
+  return `<i class="ti ti-circle-filled ${map[dot]||'wl-dot-neutral'}" style="font-size:8px"></i>`;
+}
+function wlStat(label, val) {
+  return `<div class="wl-stat"><span class="wl-stat-label">${label}</span><span class="wl-stat-val">${val??'—'}</span></div>`;
+}
+function wlIndic(label, obj, text) {
+  if (!obj) return '';
+  return `<div class="wl-indic">${wlDotIcon(obj.dot)} <span class="wl-indic-label">${label}</span> <span class="wl-indic-val">${text}</span></div>`;
+}
+
+function wlCard(e) {
+  return `
+  <div class="wl-card">
+    <div class="wl-card-head">
+      <span class="tkr">${e.ticker}</span>
+      <span class="wl-signal-tag">${e.signalType||'WATCHLIST'}</span>
+      ${wlHalalBadge(e.ticker)}
+      <span class="wl-ts">${e.ts||''}</span>
+    </div>
+    <div class="wl-stats-row">
+      ${wlStat('Entry', e.entry)}
+      ${wlStat('TP', e.tp)}
+      ${wlStat('Target 2', e.target2)}
+      ${wlStat('SL', e.sl)}
+    </div>
+    <div class="wl-indic-grid">
+      ${wlIndic('MACD', e.macd, e.macd?`${e.macd.value} (Sig: ${e.macd.signal})`:'')}
+      ${wlIndic('RSI', e.rsi, e.rsi?e.rsi.value:'')}
+      ${wlIndic('EMA 20/50', e.ema, e.ema?`${e.ema.ema20} / ${e.ema.ema50}`:'')}
+      ${wlIndic('VWAP', e.vwap, e.vwap?'$'+e.vwap.value:'')}
+      ${wlIndic('Bollinger', e.bb, e.bb?`${e.bb.low} - ${e.bb.high}`:'')}
+      ${wlIndic('ADX', e.adx, e.adx?e.adx.value:'')}
+      ${wlIndic('ATR', e.atr, e.atr?'$'+e.atr.value:'')}
+      ${wlIndic('Chart', e.chart, e.chart?e.chart.label:'')}
+      ${wlIndic('Candle', e.candle, e.candle?e.candle.label:'')}
+    </div>
+    ${e.opinion ? `<div class="wl-opinion">${e.opinion}</div>` : ''}
+  </div>`;
 }
 
 // ─── Sort function ────────────────────────────────────────────────────────────
