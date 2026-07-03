@@ -47,7 +47,7 @@ export async function onRequestGet(ctx) {
 
   } catch (err) {
     console.error('GET /api/data error:', err);
-    return Response.json({ error: err.message }, { status: 500, headers: HEADERS });
+    return Response.json({ error: 'Gagal mengambil data' }, { status: 500, headers: HEADERS });
   }
 }
 
