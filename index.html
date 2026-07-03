@@ -385,6 +385,32 @@ tr:hover td { background:var(--surf2); }
   padding-top:10px; border-top:1px solid var(--bdr);
 }
 
+.wl-card.wl-closed { opacity:.6; }
+.wl-status-badge {
+  font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;
+  text-transform:uppercase; letter-spacing:0.05em;
+}
+.wl-status-pending { background:var(--surf2); color:var(--ink3); }
+.wl-status-entered { background:rgba(59,130,246,0.15); color:#60a5fa; }
+.wl-status-tp      { background:var(--green-bg); color:var(--green); }
+.wl-status-sl       { background:rgba(239,68,68,0.15); color:var(--red); }
+
+.wl-actual-entry { font-size:11px; color:var(--ink2); margin-top:8px; }
+
+.wl-actions {
+  display:flex; gap:6px; flex-wrap:wrap;
+  margin-top:10px; padding-top:10px; border-top:1px solid var(--bdr);
+}
+.wl-act-btn {
+  font-size:11px; padding:5px 10px; border-radius:var(--r-sm);
+  border:1px solid var(--bdr2); background:var(--surf2); color:var(--ink2);
+  cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+}
+.wl-act-btn:hover { background:var(--bdr); color:var(--ink); }
+.wl-act-btn.tp  { color:var(--green); border-color:var(--green); }
+.wl-act-btn.sl  { color:var(--red); border-color:var(--red); }
+.wl-act-btn.del { color:var(--red); margin-left:auto; }
+
 @media(max-width:640px){
   .upload-grid{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:repeat(2,1fr)}
@@ -1186,13 +1212,43 @@ function wlDisplayTs(e) {
   return '';
 }
 
+function wlStatusBadge(status) {
+  const map = {
+    pending: ['Pending', 'wl-status-pending'],
+    entered: ['Entered', 'wl-status-entered'],
+    tp_hit:  ['TP Hit', 'wl-status-tp'],
+    sl_hit:  ['SL Hit', 'wl-status-sl'],
+  };
+  const [label, cls] = map[status] || map.pending;
+  return `<span class="wl-status-badge ${cls}">${label}</span>`;
+}
+
+function wlActions(e) {
+  const status = e.status || 'pending';
+  let btns = '';
+  if (status === 'pending') {
+    btns += `<button class="wl-act-btn" onclick="wlMarkEntry('${e.id}')"><i class="ti ti-target-arrow" style="font-size:12px"></i> Tandai Entry</button>`;
+  } else if (status === 'entered') {
+    btns += `<button class="wl-act-btn tp" onclick="wlMarkResult('${e.id}','tp_hit')"><i class="ti ti-circle-check" style="font-size:12px"></i> TP Hit</button>`;
+    btns += `<button class="wl-act-btn sl" onclick="wlMarkResult('${e.id}','sl_hit')"><i class="ti ti-circle-x" style="font-size:12px"></i> SL Hit</button>`;
+  }
+  btns += `<button class="wl-act-btn del" onclick="wlDeleteEntry('${e.id}')"><i class="ti ti-trash" style="font-size:12px"></i> Hapus</button>`;
+  return `<div class="wl-actions">${btns}</div>`;
+}
+
 function wlCard(e) {
+  const status = e.status || 'pending';
+  const isClosed = status==='tp_hit' || status==='sl_hit';
+  const actualInfo = e.actualEntry
+    ? `<div class="wl-actual-entry"><i class="ti ti-target-arrow" style="font-size:11px"></i> Entry aktual: <b>$${e.actualEntry}</b>${e.actualEntryAt?' · '+escapeHtml(new Date(e.actualEntryAt).toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})):''}</div>`
+    : '';
   return `
-  <div class="wl-card">
+  <div class="wl-card${isClosed?' wl-closed':''}">
     <div class="wl-card-head">
       <span class="tkr">${escapeHtml(e.ticker)}</span>
       <span class="wl-signal-tag">${escapeHtml(e.signalType||'WATCHLIST')}</span>
       ${wlHalalBadge(e.ticker)}
+      ${wlStatusBadge(status)}
       <span class="wl-ts">${escapeHtml(wlDisplayTs(e))}</span>
     </div>
     <div class="wl-stats-row">
@@ -1201,6 +1257,7 @@ function wlCard(e) {
       ${wlStat('Target 2', e.target2)}
       ${wlStat('SL', e.sl)}
     </div>
+    ${actualInfo}
     <div class="wl-indic-grid">
       ${wlIndic('MACD', e.macd, e.macd?`${e.macd.value} (Sig: ${e.macd.signal})`:'')}
       ${wlIndic('RSI', e.rsi, e.rsi?e.rsi.value:'')}
@@ -1213,7 +1270,52 @@ function wlCard(e) {
       ${wlIndic('Candle', e.candle, e.candle?e.candle.label:'')}
     </div>
     ${e.opinion ? `<div class="wl-opinion">${escapeHtml(e.opinion)}</div>` : ''}
+    ${wlActions(e)}
   </div>`;
+}
+
+// ─── Watchlist: aksi (tandai entry, tp/sl hit, hapus) ─────────────────────────
+async function wlPatch(id, fields) {
+  if (!_sessionSecret) { toggleUpload(); return false; }
+  try {
+    const res = await fetch('/api/watchlist', {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json','x-upload-secret':_sessionSecret},
+      body: JSON.stringify({ id, fields }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error||'Gagal update');
+    return true;
+  } catch(err) { alert('Gagal update watchlist: '+err.message); return false; }
+}
+
+async function wlMarkEntry(id) {
+  const priceStr = prompt('Harga entry aktual (angka saja, mis. 120.5):');
+  if (priceStr===null) return;
+  const price = parseFloat(priceStr.replace(',','.'));
+  if (isNaN(price) || price<=0) { alert('Harga tidak valid.'); return; }
+  const ok = await wlPatch(id, { status:'entered', actualEntry:price, actualEntryAt:new Date().toISOString() });
+  if (ok) fetchWatchlist(true);
+}
+
+async function wlMarkResult(id, result) {
+  const label = result==='tp_hit' ? 'TP Hit' : 'SL Hit';
+  if (!confirm(`Tandai sinyal ini sebagai "${label}"?`)) return;
+  const ok = await wlPatch(id, { status:result, closedAt:new Date().toISOString() });
+  if (ok) fetchWatchlist(true);
+}
+
+async function wlDeleteEntry(id) {
+  if (!_sessionSecret) { toggleUpload(); return; }
+  if (!confirm('Hapus entry ini dari watchlist? Tindakan ini tidak bisa dibatalkan.')) return;
+  try {
+    const res = await fetch('/api/watchlist?id='+encodeURIComponent(id), {
+      method:'DELETE', headers:{'x-upload-secret':_sessionSecret},
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error||'Gagal hapus');
+    fetchWatchlist(true);
+  } catch(err) { alert('Gagal hapus entry: '+err.message); }
 }
 
 // ─── Sort function ────────────────────────────────────────────────────────────
