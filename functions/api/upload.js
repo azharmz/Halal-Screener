@@ -56,6 +56,6 @@ export async function onRequestPost(ctx) {
 
   } catch (err) {
     console.error('POST /api/upload error:', err);
-    return Response.json({ error: err.message }, { status: 500, headers: CORS });
+    return Response.json({ error: 'Gagal menyimpan data' }, { status: 500, headers: CORS });
   }
 }
