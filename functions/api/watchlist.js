@@ -12,7 +12,7 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, x-upload-secret',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
   'Content-Type': 'application/json',
 };
 
@@ -133,3 +133,76 @@ export async function onRequestPost(ctx) {
     return Response.json({ error: 'Gagal menyimpan watchlist' }, { status: 500, headers: CORS });
   }
 }
+
+// PATCH /api/watchlist — update sebagian field dokumen tertentu (status, actualEntry, dst)
+// Body: { id: 'xxx', fields: { status:'entered', actualEntry:120.5, actualEntryAt:'...' } }
+export async function onRequestPatch(ctx) {
+  const secret = ctx.request.headers.get('x-upload-secret') || '';
+  if (!secret || secret !== ctx.env.UPLOAD_SECRET)
+    return Response.json({ error: 'Unauthorized' }, { status: 401, headers: CORS });
+
+  let body;
+  try { body = await ctx.request.json(); }
+  catch { return Response.json({ error: 'Body bukan JSON valid' }, { status: 400, headers: CORS }); }
+
+  const { id, fields } = body;
+  if (!id || typeof fields !== 'object' || !fields || !Object.keys(fields).length)
+    return Response.json({ error: 'id atau fields tidak valid' }, { status: 400, headers: CORS });
+
+  try {
+    const projectId = ctx.env.FIREBASE_PROJECT_ID;
+    const apiKey    = ctx.env.FIREBASE_API_KEY;
+    if (!projectId || !apiKey) throw new Error('ENV_MISSING');
+
+    // updateMask supaya cuma field yang dikirim yang ke-update — field lain di dokumen tetap utuh
+    const mask = Object.keys(fields).map(f => `updateMask.fieldPaths=${encodeURIComponent(f)}`).join('&');
+    const url  = `${baseUrl(projectId)}/${COLLECTION}/${id}?key=${apiKey}&${mask}`;
+
+    const res = await fetch(url, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ fields: toFirestoreFields(fields) }),
+    });
+    if (!res.ok) {
+      const errDetail = await res.text();
+      console.error('PATCH /api/watchlist Firestore error:', errDetail);
+      throw new Error('Gagal update entry');
+    }
+
+    return Response.json({ ok: true }, { headers: CORS });
+
+  } catch (err) {
+    console.error('PATCH /api/watchlist error:', err);
+    return Response.json({ error: 'Gagal update watchlist' }, { status: 500, headers: CORS });
+  }
+}
+
+// DELETE /api/watchlist?id=xxx — hapus 1 entry watchlist
+export async function onRequestDelete(ctx) {
+  const secret = ctx.request.headers.get('x-upload-secret') || '';
+  if (!secret || secret !== ctx.env.UPLOAD_SECRET)
+    return Response.json({ error: 'Unauthorized' }, { status: 401, headers: CORS });
+
+  const id = new URL(ctx.request.url).searchParams.get('id');
+  if (!id) return Response.json({ error: 'id wajib diisi' }, { status: 400, headers: CORS });
+
+  try {
+    const projectId = ctx.env.FIREBASE_PROJECT_ID;
+    const apiKey    = ctx.env.FIREBASE_API_KEY;
+    if (!projectId || !apiKey) throw new Error('ENV_MISSING');
+
+    const res = await fetch(`${baseUrl(projectId)}/${COLLECTION}/${id}?key=${apiKey}`, { method: 'DELETE' });
+    if (!res.ok && res.status !== 404) {
+      const errDetail = await res.text();
+      console.error('DELETE /api/watchlist Firestore error:', errDetail);
+      throw new Error('Gagal hapus entry');
+    }
+
+    return Response.json({ ok: true }, { headers: CORS });
+
+  } catch (err) {
+    console.error('DELETE /api/watchlist error:', err);
+    return Response.json({ error: 'Gagal hapus watchlist' }, { status: 500, headers: CORS });
+  }
+}
+
