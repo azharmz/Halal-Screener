@@ -960,15 +960,33 @@ function wlExtractDot(line) {
 function wlCleanText(s) { return String(s||'').replace(/[^\x00-\x7F]+/g,' ').replace(/\s+/g,' ').trim(); }
 
 function parseWatchlistText(text) {
-  const blockRe = /\[(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2})\][^\n]*\n/g;
-  const matches = [...String(text||'').matchAll(blockRe)];
-  if (!matches.length) return [];
+  text = String(text||'');
+
+  // Format 1 (biasanya dari desktop Telegram): tiap sinyal diawali "[DD/MM/YYYY HH:MM] ..."
+  const tsBlockRe = /\[(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2})\][^\n]*\n/g;
+  const tsMatches = [...text.matchAll(tsBlockRe)];
+
   const blocks = [];
-  for (let i=0; i<matches.length; i++) {
-    const headerEnd = matches[i].index + matches[i][0].length; // lewati baris header (mengandung kata "Signal:" juga)
-    const end = i+1<matches.length ? matches[i+1].index : text.length;
-    blocks.push({ ts: matches[i][1], content: text.slice(headerEnd, end) });
+  if (tsMatches.length) {
+    for (let i=0; i<tsMatches.length; i++) {
+      const headerEnd = tsMatches[i].index + tsMatches[i][0].length; // lewati baris header (mengandung kata "Signal:" juga)
+      const end = i+1<tsMatches.length ? tsMatches[i+1].index : text.length;
+      blocks.push({ ts: tsMatches[i][1], content: text.slice(headerEnd, end) });
+    }
+  } else {
+    // Format 2 (biasanya copy dari HP): tidak ada timestamp sama sekali.
+    // Potong tiap blok berdasarkan baris "Symbol:" yang selalu ada 1x per sinyal.
+    const symRe = /Symbol:\s*[A-Z0-9.]+/g;
+    const symMatches = [...text.matchAll(symRe)];
+    for (let i=0; i<symMatches.length; i++) {
+      const start = symMatches[i].index;
+      const end   = i+1<symMatches.length ? symMatches[i+1].index : text.length;
+      // Slice ini bisa kebawa header sinyal BERIKUTNYA yang ikut ke-slice ("🚨 ... SIGNAL 🚨") — buang itu.
+      const content = text.slice(start, end).replace(/\n*🚨[^\n]*SIGNAL[^\n]*🚨[\s\S]*$/, '').trim();
+      blocks.push({ ts: '', content });
+    }
   }
+
   return blocks.map(b=>parseWatchlistBlock(b.ts, b.content)).filter(Boolean);
 }
 
@@ -1056,7 +1074,7 @@ function parseWlPreview() {
       ${_wlPreviewEntries.map(e=>`
         <div class="wl-preview-row">
           <span class="tkr">${escapeHtml(e.ticker)}</span>
-          <span class="wl-preview-meta">${escapeHtml(e.signalType)} · Entry ${e.entry??'—'} · TP ${e.tp??'—'} · SL ${e.sl??'—'} · ${escapeHtml(e.ts)}</span>
+          <span class="wl-preview-meta">${escapeHtml(e.signalType)} · Entry ${e.entry??'—'} · TP ${e.tp??'—'} · SL ${e.sl??'—'}${e.ts?' · '+escapeHtml(e.ts):''}</span>
           ${wlHalalBadge(e.ticker)}
         </div>
       `).join('')}
@@ -1141,6 +1159,15 @@ function wlIndic(label, obj, text) {
   return `<div class="wl-indic">${wlDotIcon(obj.dot)} <span class="wl-indic-label">${label}</span> <span class="wl-indic-val">${escapeHtml(text)}</span></div>`;
 }
 
+function wlDisplayTs(e) {
+  if (e.ts) return e.ts;
+  if (e.savedAt) {
+    const d = new Date(e.savedAt);
+    if (!isNaN(d)) return d.toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) + ' (disimpan)';
+  }
+  return '';
+}
+
 function wlCard(e) {
   return `
   <div class="wl-card">
@@ -1148,7 +1175,7 @@ function wlCard(e) {
       <span class="tkr">${escapeHtml(e.ticker)}</span>
       <span class="wl-signal-tag">${escapeHtml(e.signalType||'WATCHLIST')}</span>
       ${wlHalalBadge(e.ticker)}
-      <span class="wl-ts">${escapeHtml(e.ts||'')}</span>
+      <span class="wl-ts">${escapeHtml(wlDisplayTs(e))}</span>
     </div>
     <div class="wl-stats-row">
       ${wlStat('Entry', e.entry)}
