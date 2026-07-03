@@ -10,6 +10,10 @@ const CORS = {
 
 const RSCORE = {'A+':9,'A':8,'A-':7,'B+':6,'B':5,'B-':4,'C+':3,'C':2,'C-':1};
 
+// Error yang sengaja dibuat informatif buat user (mis. "upload dulu") aman ditampilkan apa adanya.
+// Error lain (detail internal Firestore, parse error, dsb) HARUS diganti pesan generik ke client.
+function userError(msg) { const e = new Error(msg); e.userSafe = true; return e; }
+
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS });
 }
@@ -31,9 +35,9 @@ export async function onRequestPost(ctx) {
       fetch(`${baseUrl}/raw_xt?key=${apiKey}`),
     ]);
 
-    if (!tvRes.ok) throw new Error('raw_tv tidak ditemukan. Upload TradingView dulu.');
-    if (!muRes.ok) throw new Error('raw_mu tidak ditemukan. Upload Musaffa dulu.');
-    if (!xtRes.ok) throw new Error('raw_xt tidak ditemukan. Upload XTB dulu.');
+    if (!tvRes.ok) throw userError('raw_tv tidak ditemukan. Upload TradingView dulu.');
+    if (!muRes.ok) throw userError('raw_mu tidak ditemukan. Upload Musaffa dulu.');
+    if (!xtRes.ok) throw userError('raw_xt tidak ditemukan. Upload XTB dulu.');
 
     const [tvDoc, muDoc, xtDoc] = await Promise.all([tvRes.json(), muRes.json(), xtRes.json()]);
 
@@ -101,13 +105,18 @@ export async function onRequestPost(ctx) {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(resultDoc),
     });
-    if (!saveRes.ok) { const err = await saveRes.text(); throw new Error(`Gagal simpan result: ${err}`); }
+    if (!saveRes.ok) {
+      const errDetail = await saveRes.text();
+      console.error('Gagal simpan result ke Firestore:', errDetail);
+      throw userError('Gagal menyimpan hasil ke database');
+    }
 
     return Response.json({ ok: true, count: stocks.length, statTV, statHalal, statXTB }, { headers: CORS });
 
   } catch (err) {
     console.error('POST /api/process error:', err);
-    return Response.json({ error: err.message }, { status: 500, headers: CORS });
+    const msg = err.userSafe ? err.message : 'Gagal memproses data';
+    return Response.json({ error: msg }, { status: 500, headers: CORS });
   }
 }
 
