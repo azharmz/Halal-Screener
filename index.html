@@ -1062,28 +1062,46 @@ function toggleWlPaste() {
 
 function parseWlPreview() {
   const text = document.getElementById('wl-paste-text').value;
-  _wlPreviewEntries = parseWatchlistText(text);
+  const allParsed = parseWatchlistText(text);
+  const passed   = allParsed.filter(e => wlCheckHalal(e.ticker).ok);
+  const rejected = allParsed.filter(e => !wlCheckHalal(e.ticker).ok);
+  _wlPreviewEntries = passed; // hanya yang lolos XTB Halal yang akan disimpan
+
   const wrap = document.getElementById('wl-preview-wrap');
-  if (!_wlPreviewEntries.length) {
+  if (!allParsed.length) {
     wrap.innerHTML = '<div class="empty" style="padding:24px"><p>Tidak ada sinyal terdeteksi. Cek formatnya.</p></div>';
     return;
   }
-  wrap.innerHTML = `
-    <div class="panel-hint" style="margin:12px 0 8px">${_wlPreviewEntries.length} sinyal terdeteksi — cek dulu sebelum disimpan:</div>
-    <div class="wl-preview-list">
-      ${_wlPreviewEntries.map(e=>`
-        <div class="wl-preview-row">
-          <span class="tkr">${escapeHtml(e.ticker)}</span>
-          <span class="wl-preview-meta">${escapeHtml(e.signalType)} · Entry ${e.entry??'—'} · TP ${e.tp??'—'} · SL ${e.sl??'—'}${e.ts?' · '+escapeHtml(e.ts):''}</span>
-          ${wlHalalBadge(e.ticker)}
-        </div>
-      `).join('')}
-    </div>
-    <div class="panel-bottom" style="margin-top:12px">
+
+  const wlRow = e => `
+    <div class="wl-preview-row">
+      <span class="tkr">${escapeHtml(e.ticker)}</span>
+      <span class="wl-preview-meta">${escapeHtml(e.signalType)} · Entry ${e.entry??'—'} · TP ${e.tp??'—'} · SL ${e.sl??'—'}${e.ts?' · '+escapeHtml(e.ts):''}</span>
+      ${wlHalalBadge(e.ticker)}
+    </div>`;
+
+  let html = `<div class="panel-hint" style="margin:12px 0 8px">${allParsed.length} sinyal terdeteksi, ${passed.length} lolos XTB Halal — cek dulu sebelum disimpan:</div>`;
+
+  if (passed.length) {
+    html += `<div class="wl-preview-list">${passed.map(wlRow).join('')}</div>`;
+  }
+
+  if (rejected.length) {
+    html += `<div class="panel-hint" style="margin:14px 0 6px;color:var(--ink3)">${rejected.length} sinyal dilewati (tidak ada di data Halal/XTB), TIDAK akan disimpan:</div>
+      <div class="wl-preview-list">${rejected.map(e=>`<div style="opacity:.55">${wlRow(e)}</div>`).join('')}</div>`;
+  }
+
+  if (passed.length) {
+    html += `<div class="panel-bottom" style="margin-top:12px">
       <button class="act-btn btn-process" onclick="saveWlEntries()">
-        <i class="ti ti-device-floppy" style="font-size:13px"></i> Simpan ${_wlPreviewEntries.length} ke Watchlist
+        <i class="ti ti-device-floppy" style="font-size:13px"></i> Simpan ${passed.length} ke Watchlist
       </button>
     </div>`;
+  } else {
+    html += `<div class="panel-hint" style="margin-top:12px">Tidak ada sinyal yang lolos XTB Halal — tidak ada yang bisa disimpan.</div>`;
+  }
+
+  wrap.innerHTML = html;
 }
 
 async function saveWlEntries() {
