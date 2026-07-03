@@ -657,7 +657,7 @@ function showStatus(type, msg) {
   const el  = document.getElementById('status-banner');
   const ico = {loading:'ti-loader-2', ok:'ti-circle-check', error:'ti-alert-circle'};
   el.className = 'status-banner '+type;
-  el.innerHTML = `<i class="ti ${ico[type]}"></i><span>${msg}</span>`;
+  el.innerHTML = `<i class="ti ${ico[type]}"></i><span>${escapeHtml(msg)}</span>`;
 }
 
 // ─── Sector options ───────────────────────────────────────────────────────────
@@ -665,7 +665,7 @@ function buildSectorOptions() {
   const sectors = [...new Set(allStocks.map(r=>r.sector).filter(Boolean))].sort();
   const sel = document.getElementById('sec-filter');
   sel.innerHTML = '<option value="all">Semua sektor</option>'
-    + sectors.map(s=>`<option value="${s}">${s}</option>`).join('');
+    + sectors.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
@@ -681,6 +681,21 @@ function buildStats() {
 
 // ─── Format helpers ───────────────────────────────────────────────────────────
 function fmtP(v)    { return (!v||isNaN(v)) ? '—' : '$'+Number(v).toFixed(2); }
+
+// ─── Security: escape HTML & validasi URL sebelum masuk innerHTML ─────────────
+// Semua data dari file upload/API/paste Telegram harus lewat sini dulu sebelum
+// dirender, supaya karakter seperti <script> tidak dieksekusi browser.
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+function safeUrl(u) {
+  const s = String(u||'').trim();
+  if (!s || !/^https?:\/\//i.test(s)) return ''; // blok javascript:, data:, dsb — hanya http/https
+  return escapeHtml(s);
+}
+
 function fmtMcap(v) {
   if (!v||isNaN(v)) return '—';
   if (v>=1e12) return '$'+(v/1e12).toFixed(2)+'T';
@@ -704,11 +719,12 @@ function fmtSig(s) {
   else if (sl==='strong sell') { cls='sig-ssell';icon='ti-chevrons-down'; }
   else if (sl==='neutral')     { cls='sig-neu';  icon='ti-equal'; }
   else                          { cls='sig-norating'; icon='ti-minus'; }
-  return `<span class="sig ${cls}"><i class="ti ${icon}"></i>${s||'No rating'}</span>`;
+  return `<span class="sig ${cls}"><i class="ti ${icon}"></i>${escapeHtml(s||'No rating')}</span>`;
 }
 function extLink(href, content) {
-  if (!href) return content;
-  return `<a href="${href}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${content}</a>`;
+  const u = safeUrl(href);
+  if (!u) return content;
+  return `<a href="${u}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${content}</a>`;
 }
 
 // ─── Tab switcher ─────────────────────────────────────────────────────────────
@@ -805,14 +821,14 @@ function renderResult() {
       ${thSort('result','sector','Sektor')}
     </tr></thead>
     <tbody>${rows.map(r=>`<tr>
-      <td>${extLink(r.tvUrl,`<span class="tkr">${r.ticker}</span>`)}</td>
-      <td><span class="co-name">${extLink(r.tvUrl,r.name||'—')}</span></td>
-      <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[r.score]||''}">${r.rating}</span>`)}</td>
+      <td>${extLink(r.tvUrl,`<span class="tkr">${escapeHtml(r.ticker)}</span>`)}</td>
+      <td><span class="co-name">${extLink(r.tvUrl,escapeHtml(r.name||'—'))}</span></td>
+      <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[r.score]||''}">${escapeHtml(r.rating)}</span>`)}</td>
       <td class="num">${fmtP(r.price)}</td>
       <td>${fmtChg(r.chg)}</td>
       <td class="mcap-val">${fmtMcap(r.mcap)}</td>
       <td>${fmtSig(r.signal)}</td>
-      <td><span class="sect-pill">${r.sector||'—'}</span></td>
+      <td><span class="sect-pill">${escapeHtml(r.sector||'—')}</span></td>
     </tr>`).join('')}</tbody>
   </table></div>
   <div class="foot">${rows.length} dari ${results.length} saham · ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
@@ -839,8 +855,8 @@ function renderTabList(type) {
       ${thSort('tv','signal','Signal')}
     </tr>`;
     tbodyFn = r=>`<tr>
-      <td><span class="tkr">${extLink(r.tvUrl,r.ticker)}</span></td>
-      <td><span class="co-name">${r.name||'—'}</span></td>
+      <td><span class="tkr">${extLink(r.tvUrl,escapeHtml(r.ticker))}</span></td>
+      <td><span class="co-name">${escapeHtml(r.name||'—')}</span></td>
       <td class="num">${fmtP(r.price)}</td>
       <td>${fmtChg(r.chg)}</td>
       <td class="mcap-val">${fmtMcap(r.mcap)}</td>
@@ -860,10 +876,10 @@ function renderTabList(type) {
     tbodyFn = r=>{
       const score = RSCORE[r.rating]||0;
       return `<tr>
-        <td>${extLink(r.muUrl,`<span class="tkr">${r.ticker}</span>`)}</td>
-        <td><span class="co-name">${r.name||'—'}</span></td>
-        <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[score]||''}">${r.rating}</span>`)}</td>
-        <td><span class="sect-pill">${r.sector||'—'}</span></td>
+        <td>${extLink(r.muUrl,`<span class="tkr">${escapeHtml(r.ticker)}</span>`)}</td>
+        <td><span class="co-name">${escapeHtml(r.name||'—')}</span></td>
+        <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[score]||''}">${escapeHtml(r.rating)}</span>`)}</td>
+        <td><span class="sect-pill">${escapeHtml(r.sector||'—')}</span></td>
       </tr>`;
     };
     foot = `${data.length} dari ${_dbMusaffa.length} saham halal Musaffa`;
@@ -880,10 +896,10 @@ function renderTabList(type) {
     tbodyFn = r=>{
       const score = RSCORE[r.rating]||0;
       return `<tr>
-        <td><a href="${r.muUrl||''}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><span class="tkr">${r.ticker}</span></a></td>
-        <td><span class="co-name">${r.name||'—'}</span></td>
-        <td><a href="${r.muUrl||''}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><span class="rbadge ${RCLS[score]||''}">${r.rating}</span></a></td>
-        <td><span class="sect-pill">${r.sector||'—'}</span></td>
+        <td>${extLink(r.muUrl,`<span class="tkr">${escapeHtml(r.ticker)}</span>`)}</td>
+        <td><span class="co-name">${escapeHtml(r.name||'—')}</span></td>
+        <td>${extLink(r.muUrl,`<span class="rbadge ${RCLS[score]||''}">${escapeHtml(r.rating)}</span>`)}</td>
+        <td><span class="sect-pill">${escapeHtml(r.sector||'—')}</span></td>
       </tr>`;
     };
     foot = `${data.length} dari ${_dbXTHalal.length} saham halal di XTB`;
@@ -893,8 +909,8 @@ function renderTabList(type) {
     data.sort((a,b)=>sortFn(a,b,s.col,s.dir,'xt'));
     thead = `<tr>${thSort('xt','ticker','Ticker')}${thSort('xt','name','Nama')}</tr>`;
     tbodyFn = r=>`<tr>
-      <td><span class="tkr">${r.ticker}</span></td>
-      <td><span class="co-name">${r.name||'—'}</span></td>
+      <td><span class="tkr">${escapeHtml(r.ticker)}</span></td>
+      <td><span class="co-name">${escapeHtml(r.name||'—')}</span></td>
     </tr>`;
     foot = `${data.length} dari ${_dbXTB.length} saham XTB`;
   }
@@ -1011,7 +1027,7 @@ function wlCheckHalal(ticker) {
 function wlHalalBadge(ticker) {
   const c = wlCheckHalal(ticker);
   return c.ok
-    ? `<span class="wl-badge wl-badge-ok"><i class="ti ti-circle-check" style="font-size:11px"></i> Halal · XTB (${c.rating})</span>`
+    ? `<span class="wl-badge wl-badge-ok"><i class="ti ti-circle-check" style="font-size:11px"></i> Halal · XTB (${escapeHtml(c.rating)})</span>`
     : `<span class="wl-badge wl-badge-warn"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Tidak ada di data Halal/XTB</span>`;
 }
 
@@ -1039,8 +1055,8 @@ function parseWlPreview() {
     <div class="wl-preview-list">
       ${_wlPreviewEntries.map(e=>`
         <div class="wl-preview-row">
-          <span class="tkr">${e.ticker}</span>
-          <span class="wl-preview-meta">${e.signalType} · Entry ${e.entry??'—'} · TP ${e.tp??'—'} · SL ${e.sl??'—'} · ${e.ts}</span>
+          <span class="tkr">${escapeHtml(e.ticker)}</span>
+          <span class="wl-preview-meta">${escapeHtml(e.signalType)} · Entry ${e.entry??'—'} · TP ${e.tp??'—'} · SL ${e.sl??'—'} · ${escapeHtml(e.ts)}</span>
           ${wlHalalBadge(e.ticker)}
         </div>
       `).join('')}
@@ -1080,10 +1096,18 @@ async function fetchWatchlist(force) {
     _dbWatchlist = json.entries || [];
     _wlLoaded = true;
   } catch(err) {
-    document.getElementById('tab-result-wrap').innerHTML = `<div class="empty"><i class="ti ti-wifi-off"></i><p>Gagal memuat watchlist: ${err.message}</p></div>`;
+    document.getElementById('tab-result-wrap').innerHTML = `<div class="empty"><i class="ti ti-wifi-off"></i><p>Gagal memuat watchlist: ${escapeHtml(err.message)}</p></div>`;
     return;
   }
   renderWatchlist();
+}
+
+// Parse "DD/MM/YYYY HH:MM" (format ts sinyal Telegram) jadi angka epoch buat sorting
+function wlTsValue(ts) {
+  const m = String(ts||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
+  if (!m) return 0;
+  const [, d, mo, y, h, mi] = m;
+  return new Date(+y, +mo-1, +d, +h, +mi).getTime();
 }
 
 function renderWatchlist() {
@@ -1091,7 +1115,12 @@ function renderWatchlist() {
   const wrap = document.getElementById('tab-result-wrap');
 
   let data = _dbWatchlist.filter(e=>!q||e.ticker.toLowerCase().includes(q));
-  data = data.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
+  // Urut berdasarkan waktu sinyal (ts) — terbaru duluan. Fallback ke savedAt kalau ts gak kebaca.
+  data = data.slice().sort((a,b)=>{
+    const av = wlTsValue(a.ts) || Date.parse(a.savedAt||0) || 0;
+    const bv = wlTsValue(b.ts) || Date.parse(b.savedAt||0) || 0;
+    return bv - av;
+  });
 
   if (!data.length) {
     wrap.innerHTML = `<div class="empty"><i class="ti ti-star"></i><p>${_dbWatchlist.length?'Tidak ada hasil.':'Belum ada sinyal tersimpan.<br>Klik "Tambah Sinyal" untuk paste dari Telegram.'}</p></div>`;
@@ -1109,17 +1138,17 @@ function wlStat(label, val) {
 }
 function wlIndic(label, obj, text) {
   if (!obj) return '';
-  return `<div class="wl-indic">${wlDotIcon(obj.dot)} <span class="wl-indic-label">${label}</span> <span class="wl-indic-val">${text}</span></div>`;
+  return `<div class="wl-indic">${wlDotIcon(obj.dot)} <span class="wl-indic-label">${label}</span> <span class="wl-indic-val">${escapeHtml(text)}</span></div>`;
 }
 
 function wlCard(e) {
   return `
   <div class="wl-card">
     <div class="wl-card-head">
-      <span class="tkr">${e.ticker}</span>
-      <span class="wl-signal-tag">${e.signalType||'WATCHLIST'}</span>
+      <span class="tkr">${escapeHtml(e.ticker)}</span>
+      <span class="wl-signal-tag">${escapeHtml(e.signalType||'WATCHLIST')}</span>
       ${wlHalalBadge(e.ticker)}
-      <span class="wl-ts">${e.ts||''}</span>
+      <span class="wl-ts">${escapeHtml(e.ts||'')}</span>
     </div>
     <div class="wl-stats-row">
       ${wlStat('Entry', e.entry)}
@@ -1138,7 +1167,7 @@ function wlCard(e) {
       ${wlIndic('Chart', e.chart, e.chart?e.chart.label:'')}
       ${wlIndic('Candle', e.candle, e.candle?e.candle.label:'')}
     </div>
-    ${e.opinion ? `<div class="wl-opinion">${e.opinion}</div>` : ''}
+    ${e.opinion ? `<div class="wl-opinion">${escapeHtml(e.opinion)}</div>` : ''}
   </div>`;
 }
 
@@ -1267,7 +1296,7 @@ function loadFile(src, inp) {
       if (!json.length) { alert('File kosong.'); return; }
       UPLOAD_DATA[src] = json;
       uploadDone[src]  = true;
-      document.getElementById('lbl-'+src).innerHTML  = f.name+'<br>'+json.length+' baris';
+      document.getElementById('lbl-'+src).innerHTML  = escapeHtml(f.name)+'<br>'+json.length+' baris';
       document.getElementById('info-'+src).textContent = json.length+' baris';
       document.getElementById('dz-'+src).classList.add('loaded');
       document.getElementById('uc-'+src).classList.add('done');
